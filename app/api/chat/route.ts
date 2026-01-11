@@ -1,30 +1,23 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-// Configuration de l'API avec votre clé
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
-    const { message, history } = await req.json();
+    const { message } = await req.json(); // On simplifie l'entrée au maximum
 
-    // Utilisation du modèle exact spécifié dans votre code
     const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-flash-preview", // Votre modèle validé
       generationConfig: { responseMimeType: "application/json" },
-      systemInstruction:
-        "Tu es l'expert de la Maison Trille. Réponds TOUJOURS au format JSON avec 'text' et 'analysis'.",
     });
 
-    // Mapping pour Gemini : le rôle 'assistant' devient 'model'
-    const chat = model.startChat({
-      history: history.map((m: any) => ({
-        role: m.role === "user" ? "user" : "model",
-        parts: [{ text: m.content }],
-      })),
-    });
+    const prompt = `Tu es l'expert de la Maison Trille. Analyse ce message et réponds TOUJOURS en JSON pur.
+    Format attendu : { "text": "votre réponse", "analysis": { "name": "...", "budget": "...", "project": "..." } }
+    
+    Message du client : ${message}`;
 
-    const result = await chat.sendMessage(message);
+    const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
     return NextResponse.json(JSON.parse(responseText));
@@ -33,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         text: "Veuillez m'excuser, une brève interruption technique perturbe notre échange.",
-        analysis: null,
+        analysis: { name: "-", budget: "-", project: "-" },
       },
       { status: 500 }
     );
