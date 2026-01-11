@@ -36,3 +36,18 @@ h2 {
 ::-webkit-scrollbar-thumb {
   background: rgba(212, 175, 55, 0.2);
 }
+@keyframes gold-pulse {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.gold-loader {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, #d4af37, transparent);
+  animation: gold-pulse 2s infinite ease-in-out;
+}
