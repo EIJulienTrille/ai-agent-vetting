@@ -5,7 +5,8 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Bienvenue chez Maison Trille. Comment puis-je vous aider ?",
+      content:
+        "Bienvenue chez Maison Trille. Agissez-vous en votre nom propre ou représentez-vous une entité ou un tiers ?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -14,24 +15,56 @@ export default function ChatInterface() {
     budget: "-",
     project: "EN COURS",
   });
+  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current)
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages((prev) => [...prev, { role: "user", content: input }]);
+
+    const userMsg = { role: "user", content: input };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    // Ton appel API ici...
+    setIsTyping(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input, history: messages }),
+      });
+
+      const data = await response.json();
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.text },
+      ]);
+
+      if (data.analysis) {
+        setClientData(data.analysis);
+      }
+    } catch (error) {
+      console.error("Erreur de vetting:", error);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen w-full p-6 lg:p-12 gap-8 items-start justify-center max-w-[1600px] mx-auto">
+    <div className="flex flex-col lg:flex-row min-h-screen w-full p-6 lg:p-12 gap-10 items-start justify-center max-w-[1600px] mx-auto">
       {/* SECTION VETTING (Gaucher) */}
-      <div className="w-full lg:w-[65%] flex flex-col">
-        <h1 className="text-4xl font-serif mb-6 tracking-tight">VETTING</h1>
-        <div className="bg-white rounded-[40px] shadow-sm flex flex-col h-[700px] p-10 relative">
+      <div className="w-full lg:flex-[2] flex flex-col">
+        <h1 className="text-5xl font-serif mb-8 tracking-tighter text-black">
+          VETTING
+        </h1>
+        <div className="bg-white rounded-[40px] shadow-sm flex flex-col h-[700px] p-8 lg:p-12 relative overflow-hidden">
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto space-y-6 mb-20 pr-4"
+            className="flex-1 overflow-y-auto space-y-6 mb-24 pr-4 custom-scrollbar"
           >
             {messages.map((m, i) => (
               <div
@@ -41,9 +74,9 @@ export default function ChatInterface() {
                 }`}
               >
                 <div
-                  className={`p-4 px-6 rounded-2xl max-w-[85%] text-sm ${
+                  className={`p-4 px-6 rounded-[22px] max-w-[80%] text-[15px] leading-relaxed ${
                     m.role === "user"
-                      ? "bg-[#007AFF] text-white"
+                      ? "bg-[#007AFF] text-white shadow-md"
                       : "bg-[#F2F2F7] text-black"
                   }`}
                 >
@@ -51,28 +84,39 @@ export default function ChatInterface() {
                 </div>
               </div>
             ))}
+            {isTyping && (
+              <div className="text-[10px] text-gray-400 italic animate-pulse">
+                Analyse en cours...
+              </div>
+            )}
           </div>
 
-          {/* Barre de saisie flottante épurée */}
-          <div className="absolute bottom-8 left-10 right-10">
-            <div className="bg-[#F2F2F7] rounded-2xl flex items-center px-6 py-4">
+          {/* Input flottant épuré */}
+          <div className="absolute bottom-10 left-8 right-8">
+            <div className="bg-[#F2F2F7] rounded-2xl flex items-center px-6 py-4 shadow-inner border border-gray-100">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="bg-transparent flex-1 outline-none text-sm"
+                className="bg-transparent flex-1 outline-none text-[15px] text-gray-800"
                 placeholder="Écrivez votre message..."
               />
-              <button onClick={handleSend} className="ml-4 text-[#007AFF]">
+              <button
+                onClick={handleSend}
+                className="ml-4 text-[#007AFF] hover:scale-110 transition-transform"
+              >
                 <svg
-                  width="20"
-                  height="20"
+                  width="22"
+                  height="22"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
                   <path d="m22 2-7 20-4-9-9-4Z" />
+                  <path d="M22 2 11 13" />
                 </svg>
               </button>
             </div>
@@ -81,42 +125,65 @@ export default function ChatInterface() {
       </div>
 
       {/* SECTION QUALIFICATION (Droite) */}
-      <div className="w-full lg:w-[35%] flex flex-col">
-        <div className="flex justify-between items-baseline mb-6 border-b border-black pb-2">
-          <h2 className="text-2xl font-serif tracking-tight">QUALIFICATION</h2>
-        </div>
-        <div className="bg-white rounded-[40px] shadow-sm p-12 h-[700px] flex flex-col space-y-16">
-          <div className="space-y-4">
-            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+      <div className="w-full lg:flex-1 flex flex-col">
+        <h2 className="text-2xl font-serif tracking-tight mb-8 text-black border-b border-black pb-4">
+          QUALIFICATION
+        </h2>
+        <div className="bg-white rounded-[40px] shadow-sm p-10 h-[700px] flex flex-col space-y-12">
+          <div className="space-y-3">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">
               Mandant
             </p>
-            <div className="border-b border-gray-100 pb-2 flex justify-between">
-              <span className="text-lg">{clientData.name}</span>
-              <span className="text-[10px] text-gray-200">EN COURS</span>
+            <div className="flex justify-between items-end border-b border-gray-50 pb-3">
+              <span className="text-lg font-medium tracking-tight text-gray-900">
+                {clientData.name}
+              </span>
+              <span className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">
+                Identité
+              </span>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+          <div className="space-y-3">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">
               Capacité financière
             </p>
-            <div className="border-b border-gray-100 pb-2">
-              <span className="text-lg">{clientData.budget}</span>
+            <div className="flex justify-between items-end border-b border-gray-50 pb-3">
+              <span className="text-lg font-medium tracking-tight text-gray-900">
+                {clientData.budget}
+              </span>
+              <span className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">
+                Solvabilité
+              </span>
             </div>
           </div>
 
-          <div className="pt-10">
-            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-4">
+          <div className="pt-10 flex-1">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">
               Verdict Dossier
             </p>
             <div className="flex justify-between items-center">
-              <span className="text-2xl font-bold italic">
+              <span
+                className={`text-2xl font-bold italic tracking-tighter transition-colors duration-500 ${
+                  clientData.project === "RECEVABLE"
+                    ? "text-green-500"
+                    : clientData.project === "NON RECEVABLE"
+                    ? "text-red-500"
+                    : "text-gray-900"
+                }`}
+              >
                 {clientData.project}
               </span>
               <span className="text-[9px] text-gray-300 italic">
                 RECEVABLE = CONTACT
               </span>
             </div>
+          </div>
+
+          <div className="mt-auto py-6 border-t border-gray-50">
+            <p className="text-[9px] text-center text-gray-300 uppercase tracking-widest font-medium">
+              Maison Trille — Système de Vetting Certifié
+            </p>
           </div>
         </div>
       </div>
