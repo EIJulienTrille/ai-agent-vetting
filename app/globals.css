@@ -3,22 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --background: #f9f9fb; /* Fond ultra-clair type ChatGPT */
+  --background: #f5f5f7;
 }
 
 body {
   background-color: var(--background);
-  color: #1f1f1f;
+  color: #1d1d1f;
   margin: 0;
-  font-family: "Inter", -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar invisible mais fonctionnelle */
+/* Scrollbar discrète pour préserver le design */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e5e5e5;
+  background: #e5e5e7;
   border-radius: 10px;
 }
