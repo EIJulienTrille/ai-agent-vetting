@@ -6,7 +6,7 @@ export default function ChatInterface() {
     {
       role: "assistant",
       content:
-        "Bienvenue chez Maison Trille. Agissez-vous en votre nom propre ou représentez-vous une entité ou un tiers ?",
+        "Bienvenue chez Maison Trille. Pour commencer, agissez-vous en votre nom propre ou représentez-vous une entité ?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -18,16 +18,13 @@ export default function ChatInterface() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Scroll automatique vers le bas à chaque nouveau message
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current)
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
   }, [messages, isTyping]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
     const userMsg = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
@@ -37,52 +34,36 @@ export default function ChatInterface() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: input,
-          history: messages, // Envoi de l'historique complet
-        }),
+        body: JSON.stringify({ message: input, history: messages }),
       });
-
       const data = await response.json();
-      console.log("Réponse reçue de l'IA:", data);
 
-      if (data && data.text) {
+      if (data.text) {
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: data.text },
         ]);
-        if (data.analysis) {
-          setClientData(data.analysis);
-        }
-      } else {
-        throw new Error("Format de réponse invalide");
+        if (data.analysis) setClientData(data.analysis);
       }
     } catch (error) {
-      console.error("Erreur de vetting:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Je rencontre une difficulté pour traiter votre demande. Veuillez reformuler.",
-        },
-      ]);
+      console.error("Erreur API", error);
     } finally {
       setIsTyping(false);
     }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen w-full p-4 lg:p-12 gap-8 items-start justify-center max-w-[1600px] mx-auto bg-[#F5F5F7]">
+    <div className="flex flex-col lg:flex-row min-h-screen w-full bg-[#f9f9fb] p-4 lg:p-12 gap-10 items-stretch justify-center max-w-[1400px] mx-auto">
       {/* SECTION VETTING (Chat) */}
-      <div className="w-full lg:flex-[2] flex flex-col h-[85vh] lg:h-[800px]">
-        <h1 className="text-4xl lg:text-5xl font-serif mb-6 tracking-tighter text-black">
+      <div className="flex-[2] flex flex-col space-y-6">
+        <h1 className="text-4xl font-serif tracking-tight text-gray-900 ml-2">
           VETTING
         </h1>
-        <div className="bg-white rounded-[32px] lg:rounded-[40px] shadow-sm flex flex-col flex-1 p-6 lg:p-10 relative overflow-hidden border border-gray-100">
+        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 flex flex-col flex-1 relative overflow-hidden min-h-[600px] lg:min-h-[750px]">
+          {/* Zone de messages avec marges intérieures harmonieuses */}
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto space-y-6 mb-20 pr-2 custom-scrollbar"
+            className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-8 custom-scrollbar pb-32"
           >
             {messages.map((m, i) => (
               <div
@@ -92,10 +73,10 @@ export default function ChatInterface() {
                 }`}
               >
                 <div
-                  className={`p-4 px-6 rounded-[22px] max-w-[85%] text-[14px] lg:text-[15px] leading-relaxed shadow-sm transition-all ${
+                  className={`p-5 px-7 rounded-[24px] max-w-[85%] text-[15px] leading-relaxed shadow-sm ${
                     m.role === "user"
                       ? "bg-[#007AFF] text-white rounded-tr-none"
-                      : "bg-[#F2F2F7] text-[#1d1d1f] rounded-tl-none"
+                      : "bg-[#f2f2f7] text-[#1d1d1f] rounded-tl-none"
                   }`}
                 >
                   {m.content}
@@ -103,36 +84,33 @@ export default function ChatInterface() {
               </div>
             ))}
             {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-[#F2F2F7] p-4 rounded-[22px] rounded-tl-none">
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                  </div>
-                </div>
+              <div className="text-xs text-gray-400 animate-pulse ml-2 font-medium">
+                Maison Trille analyse...
               </div>
             )}
           </div>
 
-          {/* Input Bar */}
-          <div className="absolute bottom-6 left-6 right-6 lg:bottom-10 lg:left-10 lg:right-10">
-            <div className="bg-[#F2F2F7] rounded-2xl flex items-center px-4 lg:px-6 py-3 lg:py-4 border border-gray-200 focus-within:bg-white focus-within:shadow-md transition-all">
+          {/* Barre de saisie style ChatGPT (flottante avec marges) */}
+          <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-white via-white/90 to-transparent">
+            <div className="max-w-3xl mx-auto flex items-center bg-[#f4f4f4] rounded-2xl px-6 py-4 border border-gray-200 focus-within:border-gray-400 transition-all">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="bg-transparent flex-1 outline-none text-sm text-gray-800"
-                placeholder="Écrivez votre message..."
+                className="bg-transparent flex-1 outline-none text-[15px]"
+                placeholder="Répondez ici..."
               />
-              <button onClick={handleSend} className="ml-4 text-[#007AFF] p-1">
+              <button
+                onClick={handleSend}
+                className="ml-4 text-[#007AFF] hover:scale-110 transition-transform"
+              >
                 <svg
                   width="24"
                   height="24"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -146,40 +124,40 @@ export default function ChatInterface() {
       </div>
 
       {/* SECTION QUALIFICATION (Fiche) */}
-      <div className="w-full lg:flex-1 flex flex-col h-auto lg:h-[800px]">
-        <h2 className="text-2xl font-serif tracking-tight mb-6 text-black border-b border-black pb-2">
+      <div className="flex-1 flex flex-col space-y-6">
+        <h2 className="text-2xl font-serif tracking-tight text-gray-900 border-b border-gray-200 pb-4">
           QUALIFICATION
         </h2>
-        <div className="bg-white rounded-[32px] lg:rounded-[40px] shadow-sm p-8 lg:p-10 flex flex-col space-y-12 flex-1 border border-gray-100">
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 flex flex-col space-y-12 flex-1">
+          <div className="space-y-3">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
               Mandant
             </p>
-            <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-              <span className="text-lg font-medium text-gray-900">
+            <div className="border-b border-gray-100 pb-3">
+              <span className="text-lg font-medium text-gray-800">
                 {clientData.name}
               </span>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <div className="space-y-3">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
               Capacité financière
             </p>
-            <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-              <span className="text-lg font-medium text-gray-900">
+            <div className="border-b border-gray-100 pb-3">
+              <span className="text-lg font-medium text-gray-800">
                 {clientData.budget}
               </span>
             </div>
           </div>
 
-          <div className="pt-8">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+          <div className="pt-10">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
               Verdict Dossier
             </p>
             <div className="flex justify-between items-center">
               <span
-                className={`text-2xl font-bold italic tracking-tighter ${
+                className={`text-3xl font-bold italic tracking-tighter ${
                   clientData.project === "RECEVABLE"
                     ? "text-green-500"
                     : clientData.project === "NON RECEVABLE"
@@ -189,16 +167,7 @@ export default function ChatInterface() {
               >
                 {clientData.project}
               </span>
-              <span className="text-[9px] text-gray-300 italic uppercase">
-                Statut IA
-              </span>
             </div>
-          </div>
-
-          <div className="mt-auto pt-6 border-t border-gray-50 text-center">
-            <p className="text-[9px] text-gray-300 uppercase tracking-[0.2em]">
-              Maison Trille — Off-Market Vetting
-            </p>
           </div>
         </div>
       </div>
