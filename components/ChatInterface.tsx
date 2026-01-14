@@ -6,15 +6,14 @@ export default function ChatInterface() {
     {
       role: "assistant",
       content:
-        "Bienvenue chez Maison Trille. Décrivez-moi l'envergure de votre vision.",
+        "Bienvenue chez Maison Trille. Agissez-vous en votre nom propre ou représentez-vous une entité ou un tiers ?",
     },
   ]);
   const [input, setInput] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false); // État pour l'animation dorée
   const [clientData, setClientData] = useState({
     name: "-",
     budget: "-",
-    project: "-",
+    project: "EN COURS",
   });
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +27,6 @@ export default function ChatInterface() {
     const userMsg = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setIsAnalyzing(true); // Active l'effet de vetting
 
     try {
       const response = await fetch("/api/chat", {
@@ -37,44 +35,32 @@ export default function ChatInterface() {
         body: JSON.stringify({ message: input, history: messages }),
       });
       const data = await response.json();
-
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.text },
       ]);
-      if (data.analysis) {
-        // Simulation d'un temps de traitement "humain" pour le luxe
-        setTimeout(() => {
-          setClientData(data.analysis);
-          setIsAnalyzing(false); // Désactive l'effet une fois la fiche mise à jour
-        }, 1200);
-      } else {
-        setIsAnalyzing(false);
-      }
+      if (data.analysis) setClientData(data.analysis);
     } catch (error) {
-      console.error("Erreur de vetting", error);
-      setIsAnalyzing(false);
+      console.error("Erreur technique", error);
     }
   };
 
   return (
-    <div className="flex h-screen bg-[#050505] text-[#F5F5F5] font-light">
-      {/* Zone de Chat */}
-      <div className="flex-1 flex flex-col border-r border-white/5">
-        <header className="p-10 flex justify-between items-center">
-          <h1 className="text-xl tracking-[0.5em] uppercase font-serif text-[#D4AF37]">
-            Maison Trille
+    <div className="min-h-screen w-full flex flex-col md:flex-row items-center justify-center p-4 md:p-10 gap-8 bg-black/40 backdrop-blur-xl">
+      {/* CARTE GAUCHE : VETTING CHAT */}
+      <div className="figma-card w-full max-w-[400px] h-[600px] flex flex-col overflow-hidden">
+        <div className="p-8 border-b border-gray-100">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 uppercase">
+            Vetting
           </h1>
-          {isAnalyzing && (
-            <div className="text-[9px] tracking-[0.2em] text-[#D4AF37] italic animate-pulse">
-              VETTING EN COURS...
-            </div>
-          )}
-        </header>
+          <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
+            Fonctionnalité — Expert Luxe
+          </p>
+        </div>
 
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-10 space-y-12 pb-10"
+          className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gray-50/50"
         >
           {messages.map((m, i) => (
             <div
@@ -84,10 +70,10 @@ export default function ChatInterface() {
               }`}
             >
               <div
-                className={`max-w-xl text-[13px] tracking-wide leading-relaxed ${
+                className={`p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
                   m.role === "user"
-                    ? "text-white/30 italic"
-                    : "text-white border-l border-[#D4AF37]/40 pl-6"
+                    ? "bg-blue-500 text-white rounded-tr-none"
+                    : "bg-white text-gray-700 rounded-tl-none border border-gray-100"
                 }`}
               >
                 {m.content}
@@ -96,56 +82,95 @@ export default function ChatInterface() {
           ))}
         </div>
 
-        <div className="p-10">
-          {/* Ligne de chargement dorée minimaliste */}
-          <div className="h-[1px] w-full bg-white/5 relative overflow-hidden mb-4">
-            {isAnalyzing && <div className="gold-loader"></div>}
-          </div>
-
-          <div className="relative border-b border-white/10 focus-within:border-[#D4AF37] transition-all duration-700">
+        <div className="p-6 bg-white border-t border-gray-100">
+          <div className="relative flex items-center bg-gray-50 rounded-xl px-4 border border-gray-100 focus-within:border-blue-500 transition-all">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="VOTRE VISION..."
-              className="w-full bg-transparent py-4 text-[10px] tracking-[0.3em] uppercase focus:outline-none placeholder:text-white/5"
+              placeholder="Écrivez votre message..."
+              className="w-full bg-transparent py-4 text-sm outline-none text-gray-800 placeholder:text-gray-400"
             />
+            <button
+              onClick={handleSend}
+              className="text-gray-300 hover:text-blue-500"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m22 2-7 20-4-9-9-4Z" />
+                <path d="M22 2 11 13" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Fiche de Qualification Confidentielle */}
-      <div className="w-96 bg-[#080808] p-12 flex flex-col justify-between">
-        <section>
-          <h2 className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-20">
-            Qualification de Haut Vol
+      {/* CARTE DROITE : QUALIFICATION */}
+      <div className="figma-card w-full max-w-[400px] h-[600px] p-10 flex flex-col">
+        <div className="border-b border-gray-100 pb-6 mb-10">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 uppercase">
+            Qualification
           </h2>
-          <div className="space-y-16">
-            {[
-              { label: "Mandant", value: clientData.name },
-              { label: "Fonds Estimés", value: clientData.budget },
-              { label: "Nature du Projet", value: clientData.project },
-            ].map((d, idx) => (
-              <div key={idx} className="relative group">
-                <p className="text-[8px] tracking-[0.3em] text-[#D4AF37]/60 uppercase mb-3">
-                  {d.label}
-                </p>
-                <p className="text-[13px] tracking-[0.15em] text-white font-normal uppercase transition-all duration-500 group-hover:pl-2">
-                  {d.value}
-                </p>
-                <div
-                  className={`absolute -left-4 top-0 h-full w-[1px] bg-[#D4AF37]/0 transition-all duration-500 ${
-                    isAnalyzing ? "bg-[#D4AF37]/50" : ""
-                  }`}
-                ></div>
-              </div>
-            ))}
-          </div>
-        </section>
+          <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
+            Fiche Prospect — Maison Trille
+          </p>
+        </div>
 
-        <footer className="text-[8px] tracking-[0.2em] text-white/10 uppercase italic">
-          Document strictement confidentiel - Maison Trille © 2026
-        </footer>
+        <div className="space-y-10 flex-1">
+          {[
+            { label: "Mandant", value: clientData.name, status: "EN COURS" },
+            {
+              label: "Capacité financière",
+              value: clientData.budget,
+              status: "À VÉRIFIER",
+            },
+            { label: "Verdict Dossier", value: clientData.project, status: "" },
+          ].map((item, idx) => (
+            <div key={idx} className="flex flex-col">
+              <div className="flex justify-between items-end mb-2">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                  {item.label}
+                </span>
+                {item.status && (
+                  <span className="text-[9px] font-bold text-gray-300 uppercase">
+                    {item.status}
+                  </span>
+                )}
+              </div>
+              <div
+                className={`text-sm font-medium border-b border-gray-100 pb-2 flex justify-between ${
+                  item.value === "RECEVABLE"
+                    ? "text-green-500"
+                    : item.value === "NON RECEVABLE"
+                    ? "text-red-500"
+                    : "text-gray-900"
+                }`}
+              >
+                {item.value}
+                {item.label === "Verdict Dossier" && (
+                  <span className="text-[10px] opacity-50 italic">
+                    RECEVABLE = CONTACT
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-auto text-center py-4 border-2 border-dashed border-gray-100 rounded-2xl">
+          <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">
+            Analyse IA en temps réel
+          </p>
+        </div>
       </div>
     </div>
   );
