@@ -11,10 +11,34 @@ body {
   color: #1d1d1f;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar discrète pour préserver le design */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  background-color: #a1a1a6;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.dot1 {
+  animation-delay: -0.32s;
+}
+.dot2 {
+  animation-delay: -0.16s;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }

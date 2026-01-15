@@ -56,21 +56,20 @@ export default function ChatInterface() {
       style={{
         backgroundColor: "#F5F5F7",
         minHeight: "100vh",
-        padding: "40px 60px",
+        padding: "60px",
         display: "flex",
         flexDirection: "column",
-        fontFamily: "-apple-system, system-ui, sans-serif",
       }}
     >
       <div
         style={{
           display: "flex",
-          flexDirection: "row", // Force l'alignement horizontal
+          flexDirection: "row",
           gap: "40px",
           width: "100%",
           maxWidth: "1600px",
           margin: "0 auto",
-          alignItems: "stretch", // Les deux blocs font la même hauteur
+          alignItems: "stretch", // Garantit la même hauteur pour les deux blocs
         }}
       >
         {/* BLOC VETTING (70%) */}
@@ -93,9 +92,8 @@ export default function ChatInterface() {
               position: "relative",
               display: "flex",
               flexDirection: "column",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.03)",
               overflow: "hidden",
-              border: "1px solid rgba(0,0,0,0.02)",
             }}
           >
             <div
@@ -124,35 +122,43 @@ export default function ChatInterface() {
                       borderRadius: "26px",
                       maxWidth: "75%",
                       fontSize: "16px",
-                      lineHeight: "1.5",
                       backgroundColor:
                         m.role === "user" ? "#007AFF" : "#F2F2F7",
                       color: m.role === "user" ? "white" : "#1d1d1f",
-                      boxShadow:
-                        m.role === "user"
-                          ? "0 4px 15px rgba(0,122,255,0.2)"
-                          : "none",
                     }}
                   >
                     {m.content}
                   </div>
                 </div>
               ))}
+
+              {/* Effet de transition "IA qui réfléchit" */}
               {isTyping && (
                 <div
                   style={{
-                    fontSize: "12px",
-                    color: "#A1A1A6",
-                    fontStyle: "italic",
-                    marginLeft: "10px",
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    marginBottom: "24px",
                   }}
                 >
-                  L'IA Maison Trille analyse votre profil...
+                  <div
+                    style={{
+                      padding: "18px 30px",
+                      borderRadius: "26px",
+                      backgroundColor: "#F2F2F7",
+                      display: "flex",
+                      gap: "4px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span className="dot dot1"></span>
+                    <span className="dot dot2"></span>
+                    <span className="dot"></span>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* BARRE DE SAISIE FIXÉE EN BAS */}
             <div
               style={{
                 position: "absolute",
@@ -160,8 +166,7 @@ export default function ChatInterface() {
                 left: "0",
                 right: "0",
                 padding: "40px",
-                backgroundColor: "rgba(255,255,255,0.9)",
-                backdropFilter: "blur(10px)",
+                backgroundColor: "white",
               }}
             >
               <div
@@ -171,7 +176,6 @@ export default function ChatInterface() {
                   display: "flex",
                   padding: "18px 30px",
                   alignItems: "center",
-                  border: "1px solid rgba(0,0,0,0.05)",
                 }}
               >
                 <input
@@ -184,7 +188,6 @@ export default function ChatInterface() {
                     border: "none",
                     outline: "none",
                     fontSize: "16px",
-                    color: "#1d1d1f",
                   }}
                   placeholder="Écrivez votre message..."
                 />
@@ -194,7 +197,6 @@ export default function ChatInterface() {
                     color: "#007AFF",
                     marginLeft: "20px",
                     cursor: "pointer",
-                    display: "flex",
                   }}
                 >
                   <svg
@@ -232,11 +234,10 @@ export default function ChatInterface() {
               backgroundColor: "white",
               borderRadius: "40px",
               padding: "50px 40px",
-              height: "750px",
+              flex: 1, // Prend toute la hauteur disponible du parent (stretch)
               display: "flex",
               flexDirection: "column",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-              border: "1px solid rgba(0,0,0,0.02)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.03)",
             }}
           >
             <div
@@ -259,7 +260,6 @@ export default function ChatInterface() {
                   style={{
                     fontSize: "20px",
                     fontWeight: "500",
-                    color: "#1d1d1f",
                     borderBottom: "1px solid #F2F2F7",
                     paddingBottom: "10px",
                   }}
@@ -284,7 +284,6 @@ export default function ChatInterface() {
                   style={{
                     fontSize: "20px",
                     fontWeight: "500",
-                    color: "#1d1d1f",
                     borderBottom: "1px solid #F2F2F7",
                     paddingBottom: "10px",
                   }}
@@ -310,7 +309,7 @@ export default function ChatInterface() {
                     fontSize: "32px",
                     fontWeight: "800",
                     fontStyle: "italic",
-                    letterSpacing: "-0.02em",
+                    transition: "color 0.5s ease",
                     color:
                       clientData.project === "RECEVABLE"
                         ? "#34C759"
