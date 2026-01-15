@@ -56,13 +56,35 @@ export default function ChatInterface() {
       style={{
         backgroundColor: "#F5F5F7",
         minHeight: "100vh",
-        padding: "60px",
+        padding: "40px 60px",
+        display: "flex",
+        flexDirection: "column",
+        fontFamily: "-apple-system, system-ui, sans-serif",
       }}
     >
-      <div className="flex flex-col lg:flex-row gap-12 max-w-[1600px] mx-auto items-stretch">
-        {/* BLOC VETTING */}
-        <div className="flex-[2] flex flex-col">
-          <h1 className="text-5xl font-serif mb-8 tracking-tighter">VETTING</h1>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row", // Force l'alignement horizontal
+          gap: "40px",
+          width: "100%",
+          maxWidth: "1600px",
+          margin: "0 auto",
+          alignItems: "stretch", // Les deux blocs font la même hauteur
+        }}
+      >
+        {/* BLOC VETTING (70%) */}
+        <div style={{ width: "70%", display: "flex", flexDirection: "column" }}>
+          <h1
+            style={{
+              fontSize: "48px",
+              fontWeight: "800",
+              marginBottom: "30px",
+              letterSpacing: "-0.04em",
+            }}
+          >
+            VETTING
+          </h1>
           <div
             style={{
               backgroundColor: "white",
@@ -71,37 +93,45 @@ export default function ChatInterface() {
               position: "relative",
               display: "flex",
               flexDirection: "column",
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
               overflow: "hidden",
+              border: "1px solid rgba(0,0,0,0.02)",
             }}
           >
-            {/* Zone de Chat avec marges intérieures généreuses */}
             <div
               ref={scrollRef}
               style={{
                 flex: 1,
                 overflowY: "auto",
-                padding: "50px",
-                paddingBottom: "120px",
+                padding: "50px 60px",
+                paddingBottom: "140px",
               }}
               className="custom-scrollbar"
             >
               {messages.map((m, i) => (
                 <div
                   key={i}
-                  className={`flex ${
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  } mb-6`}
+                  style={{
+                    display: "flex",
+                    justifyContent:
+                      m.role === "user" ? "flex-end" : "flex-start",
+                    marginBottom: "24px",
+                  }}
                 >
                   <div
                     style={{
-                      padding: "16px 28px",
-                      borderRadius: "24px",
-                      maxWidth: "80%",
-                      fontSize: "15px",
+                      padding: "18px 30px",
+                      borderRadius: "26px",
+                      maxWidth: "75%",
+                      fontSize: "16px",
+                      lineHeight: "1.5",
                       backgroundColor:
                         m.role === "user" ? "#007AFF" : "#F2F2F7",
                       color: m.role === "user" ? "white" : "#1d1d1f",
+                      boxShadow:
+                        m.role === "user"
+                          ? "0 4px 15px rgba(0,122,255,0.2)"
+                          : "none",
                     }}
                   >
                     {m.content}
@@ -109,31 +139,39 @@ export default function ChatInterface() {
                 </div>
               ))}
               {isTyping && (
-                <div className="text-xs text-gray-400 italic">
-                  Maison Trille traite votre dossier...
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#A1A1A6",
+                    fontStyle: "italic",
+                    marginLeft: "10px",
+                  }}
+                >
+                  L'IA Maison Trille analyse votre profil...
                 </div>
               )}
             </div>
 
-            {/* BARRE DE SAISIE : FORCÉE EN BAS DU BLOC */}
+            {/* BARRE DE SAISIE FIXÉE EN BAS */}
             <div
               style={{
                 position: "absolute",
                 bottom: "0",
                 left: "0",
                 right: "0",
-                padding: "30px",
-                backgroundColor: "white",
-                borderTop: "1px solid #F2F2F7",
+                padding: "40px",
+                backgroundColor: "rgba(255,255,255,0.9)",
+                backdropFilter: "blur(10px)",
               }}
             >
               <div
                 style={{
                   backgroundColor: "#F2F2F7",
-                  borderRadius: "20px",
+                  borderRadius: "22px",
                   display: "flex",
-                  padding: "15px 25px",
+                  padding: "18px 30px",
                   alignItems: "center",
+                  border: "1px solid rgba(0,0,0,0.05)",
                 }}
               >
                 <input
@@ -145,7 +183,8 @@ export default function ChatInterface() {
                     flex: 1,
                     border: "none",
                     outline: "none",
-                    fontSize: "15px",
+                    fontSize: "16px",
+                    color: "#1d1d1f",
                   }}
                   placeholder="Écrivez votre message..."
                 />
@@ -153,13 +192,14 @@ export default function ChatInterface() {
                   onClick={handleSend}
                   style={{
                     color: "#007AFF",
-                    marginLeft: "15px",
+                    marginLeft: "20px",
                     cursor: "pointer",
+                    display: "flex",
                   }}
                 >
                   <svg
-                    width="24"
-                    height="24"
+                    width="26"
+                    height="26"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -174,47 +214,110 @@ export default function ChatInterface() {
           </div>
         </div>
 
-        {/* BLOC QUALIFICATION */}
-        <div className="flex-1 flex flex-col">
-          <h2 className="text-2xl font-serif mb-8 border-b border-black pb-4">
+        {/* BLOC QUALIFICATION (30%) */}
+        <div style={{ width: "30%", display: "flex", flexDirection: "column" }}>
+          <h2
+            style={{
+              fontSize: "24px",
+              fontWeight: "700",
+              marginBottom: "30px",
+              paddingBottom: "15px",
+              borderBottom: "2px solid black",
+            }}
+          >
             QUALIFICATION
           </h2>
           <div
             style={{
               backgroundColor: "white",
               borderRadius: "40px",
-              padding: "50px",
+              padding: "50px 40px",
               height: "750px",
               display: "flex",
               flexDirection: "column",
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
+              border: "1px solid rgba(0,0,0,0.02)",
             }}
           >
-            <div className="space-y-12">
-              <div className="border-b border-gray-50 pb-4">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "50px" }}
+            >
+              <div>
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#A1A1A6",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.2em",
+                    marginBottom: "12px",
+                  }}
+                >
                   Mandant
                 </p>
-                <span className="text-lg font-medium">{clientData.name}</span>
-              </div>
-              <div className="border-b border-gray-50 pb-4">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                  Capacité financière
-                </p>
-                <span className="text-lg font-medium">{clientData.budget}</span>
+                <div
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: "500",
+                    color: "#1d1d1f",
+                    borderBottom: "1px solid #F2F2F7",
+                    paddingBottom: "10px",
+                  }}
+                >
+                  {clientData.name}
+                </div>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#A1A1A6",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.2em",
+                    marginBottom: "12px",
+                  }}
+                >
+                  Capacité financière
+                </p>
+                <div
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: "500",
+                    color: "#1d1d1f",
+                    borderBottom: "1px solid #F2F2F7",
+                    paddingBottom: "10px",
+                  }}
+                >
+                  {clientData.budget}
+                </div>
+              </div>
+              <div style={{ marginTop: "20px" }}>
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#A1A1A6",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.2em",
+                    marginBottom: "15px",
+                  }}
+                >
                   Verdict Dossier
                 </p>
                 <span
-                  className={`text-3xl font-bold italic ${
-                    clientData.project === "RECEVABLE"
-                      ? "text-green-500"
-                      : clientData.project === "NON RECEVABLE"
-                      ? "text-red-500"
-                      : "text-gray-900"
-                  }`}
+                  style={{
+                    fontSize: "32px",
+                    fontWeight: "800",
+                    fontStyle: "italic",
+                    letterSpacing: "-0.02em",
+                    color:
+                      clientData.project === "RECEVABLE"
+                        ? "#34C759"
+                        : clientData.project === "NON RECEVABLE"
+                        ? "#FF3B30"
+                        : "#1d1d1f",
+                  }}
                 >
                   {clientData.project}
                 </span>
