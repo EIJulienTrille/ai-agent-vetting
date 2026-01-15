@@ -19,8 +19,9 @@ export default function ChatInterface() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current)
+    if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages, isTyping]);
 
   const handleSend = async () => {
@@ -37,7 +38,7 @@ export default function ChatInterface() {
         body: JSON.stringify({ message: input, history: messages }),
       });
       const data = await response.json();
-      if (data.text) {
+      if (data && data.text) {
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: data.text },
@@ -56,9 +57,10 @@ export default function ChatInterface() {
       style={{
         backgroundColor: "#F5F5F7",
         minHeight: "100vh",
-        padding: "60px",
+        padding: "40px 60px",
         display: "flex",
-        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <div
@@ -67,18 +69,17 @@ export default function ChatInterface() {
           flexDirection: "row",
           gap: "40px",
           width: "100%",
-          maxWidth: "1600px",
-          margin: "0 auto",
-          alignItems: "stretch", // Garantit la même hauteur pour les deux blocs
+          maxWidth: "1400px",
+          alignItems: "stretch",
         }}
       >
         {/* BLOC VETTING (70%) */}
         <div style={{ width: "70%", display: "flex", flexDirection: "column" }}>
           <h1
             style={{
-              fontSize: "48px",
+              fontSize: "32px",
               fontWeight: "800",
-              marginBottom: "30px",
+              marginBottom: "20px",
               letterSpacing: "-0.04em",
             }}
           >
@@ -88,7 +89,7 @@ export default function ChatInterface() {
             style={{
               backgroundColor: "white",
               borderRadius: "40px",
-              height: "750px",
+              height: "600px",
               position: "relative",
               display: "flex",
               flexDirection: "column",
@@ -101,8 +102,8 @@ export default function ChatInterface() {
               style={{
                 flex: 1,
                 overflowY: "auto",
-                padding: "50px 60px",
-                paddingBottom: "140px",
+                padding: "40px 50px",
+                paddingBottom: "120px",
               }}
               className="custom-scrollbar"
             >
@@ -113,15 +114,15 @@ export default function ChatInterface() {
                     display: "flex",
                     justifyContent:
                       m.role === "user" ? "flex-end" : "flex-start",
-                    marginBottom: "24px",
+                    marginBottom: "20px",
                   }}
                 >
                   <div
                     style={{
-                      padding: "18px 30px",
-                      borderRadius: "26px",
+                      padding: "16px 26px",
+                      borderRadius: "24px",
                       maxWidth: "75%",
-                      fontSize: "16px",
+                      fontSize: "15px",
                       backgroundColor:
                         m.role === "user" ? "#007AFF" : "#F2F2F7",
                       color: m.role === "user" ? "white" : "#1d1d1f",
@@ -131,20 +132,18 @@ export default function ChatInterface() {
                   </div>
                 </div>
               ))}
-
-              {/* Effet de transition "IA qui réfléchit" */}
               {isTyping && (
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "flex-start",
-                    marginBottom: "24px",
+                    marginBottom: "20px",
                   }}
                 >
                   <div
                     style={{
-                      padding: "18px 30px",
-                      borderRadius: "26px",
+                      padding: "16px 26px",
+                      borderRadius: "24px",
                       backgroundColor: "#F2F2F7",
                       display: "flex",
                       gap: "4px",
@@ -165,16 +164,16 @@ export default function ChatInterface() {
                 bottom: "0",
                 left: "0",
                 right: "0",
-                padding: "40px",
+                padding: "30px",
                 backgroundColor: "white",
               }}
             >
               <div
                 style={{
                   backgroundColor: "#F2F2F7",
-                  borderRadius: "22px",
+                  borderRadius: "18px",
                   display: "flex",
-                  padding: "18px 30px",
+                  padding: "14px 24px",
                   alignItems: "center",
                 }}
               >
@@ -187,21 +186,23 @@ export default function ChatInterface() {
                     flex: 1,
                     border: "none",
                     outline: "none",
-                    fontSize: "16px",
+                    fontSize: "15px",
                   }}
-                  placeholder="Écrivez votre message..."
+                  placeholder="Répondez à l'agent..."
                 />
                 <button
                   onClick={handleSend}
                   style={{
                     color: "#007AFF",
-                    marginLeft: "20px",
+                    marginLeft: "15px",
                     cursor: "pointer",
+                    background: "none",
+                    border: "none",
                   }}
                 >
                   <svg
-                    width="26"
-                    height="26"
+                    width="22"
+                    height="22"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -220,10 +221,10 @@ export default function ChatInterface() {
         <div style={{ width: "30%", display: "flex", flexDirection: "column" }}>
           <h2
             style={{
-              fontSize: "24px",
+              fontSize: "20px",
               fontWeight: "700",
-              marginBottom: "30px",
-              paddingBottom: "15px",
+              marginBottom: "20px",
+              paddingBottom: "10px",
               borderBottom: "2px solid black",
             }}
           >
@@ -233,35 +234,35 @@ export default function ChatInterface() {
             style={{
               backgroundColor: "white",
               borderRadius: "40px",
-              padding: "50px 40px",
-              flex: 1, // Prend toute la hauteur disponible du parent (stretch)
+              padding: "40px 35px",
+              flex: 1,
               display: "flex",
               flexDirection: "column",
               boxShadow: "0 10px 30px rgba(0,0,0,0.03)",
             }}
           >
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "50px" }}
+              style={{ display: "flex", flexDirection: "column", gap: "40px" }}
             >
               <div>
                 <p
                   style={{
-                    fontSize: "11px",
+                    fontSize: "10px",
                     fontWeight: "700",
                     color: "#A1A1A6",
                     textTransform: "uppercase",
-                    letterSpacing: "0.2em",
-                    marginBottom: "12px",
+                    letterSpacing: "0.15em",
+                    marginBottom: "8px",
                   }}
                 >
                   Mandant
                 </p>
                 <div
                   style={{
-                    fontSize: "20px",
+                    fontSize: "18px",
                     fontWeight: "500",
                     borderBottom: "1px solid #F2F2F7",
-                    paddingBottom: "10px",
+                    paddingBottom: "8px",
                   }}
                 >
                   {clientData.name}
@@ -270,46 +271,45 @@ export default function ChatInterface() {
               <div>
                 <p
                   style={{
-                    fontSize: "11px",
+                    fontSize: "10px",
                     fontWeight: "700",
                     color: "#A1A1A6",
                     textTransform: "uppercase",
-                    letterSpacing: "0.2em",
-                    marginBottom: "12px",
+                    letterSpacing: "0.15em",
+                    marginBottom: "8px",
                   }}
                 >
                   Capacité financière
                 </p>
                 <div
                   style={{
-                    fontSize: "20px",
+                    fontSize: "18px",
                     fontWeight: "500",
                     borderBottom: "1px solid #F2F2F7",
-                    paddingBottom: "10px",
+                    paddingBottom: "8px",
                   }}
                 >
                   {clientData.budget}
                 </div>
               </div>
-              <div style={{ marginTop: "20px" }}>
+              <div style={{ marginTop: "10px" }}>
                 <p
                   style={{
-                    fontSize: "11px",
+                    fontSize: "10px",
                     fontWeight: "700",
                     color: "#A1A1A6",
                     textTransform: "uppercase",
-                    letterSpacing: "0.2em",
-                    marginBottom: "15px",
+                    letterSpacing: "0.15em",
+                    marginBottom: "12px",
                   }}
                 >
                   Verdict Dossier
                 </p>
                 <span
                   style={{
-                    fontSize: "32px",
+                    fontSize: "24px",
                     fontWeight: "800",
                     fontStyle: "italic",
-                    transition: "color 0.5s ease",
                     color:
                       clientData.project === "RECEVABLE"
                         ? "#34C759"
