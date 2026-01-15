@@ -26,6 +26,7 @@ export default function ChatInterface() {
 
   const handleSend = async () => {
     if (!input.trim()) return;
+
     const userMsg = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
@@ -37,16 +38,41 @@ export default function ChatInterface() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input, history: messages }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
       const data = await response.json();
+
+      // Vérification et parsing sécurisé de la réponse de l'IA
       if (data && data.text) {
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: data.text },
         ]);
-        if (data.analysis) setClientData(data.analysis);
+
+        // Mise à jour de la fiche de qualification uniquement si l'analyse est présente
+        if (data.analysis) {
+          setClientData({
+            name: data.analysis.name || "-",
+            budget: data.analysis.budget || "-",
+            project: data.analysis.project || "EN COURS",
+          });
+        }
+      } else {
+        throw new Error("Format de réponse de l'IA invalide");
       }
     } catch (error) {
-      console.error("Erreur API:", error);
+      console.error("Détail de l'erreur technique:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Désolé, je rencontre une difficulté technique pour analyser votre demande. Pouvez-vous reformuler ?",
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
