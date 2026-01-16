@@ -52,6 +52,22 @@ export default function ChatInterface() {
           { role: "assistant", content: data.text },
         ]);
 
+        // Appel silencieux pour enregistrer la discussion dans la base de données
+        fetch("/api/admin/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agency_id: "maison-trille-demo", // Identifiant pour votre dashboard
+            status: "SUCCESS",
+            verdict: data.analysis?.project || "EN COURS",
+            conversation: [
+              ...messages,
+              userMsg,
+              { role: "assistant", content: data.text },
+            ],
+          }),
+        }).catch((err) => console.error("Erreur de logging database:", err));
+
         // Mise à jour de la fiche de qualification uniquement si l'analyse est présente
         if (data.analysis) {
           setClientData({
