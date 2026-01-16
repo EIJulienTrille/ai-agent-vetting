@@ -1,14 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-// Interface pour sécuriser l'accès aux données (évite l'erreur conversation_data)
+// Interface pour sécuriser l'accès aux données Postgres
 interface VettingLog {
   id: string;
   created_at: string;
   agency_id: string;
   status: string;
   verdict: string;
-  conversation_data: any; // On utilise any ici car le JSONB peut arriver déjà parsé
+  conversation_data: any;
   error_message?: string;
 }
 
@@ -17,8 +17,32 @@ export default function AdminDashboard() {
   const [selectedLog, setSelectedLog] = useState<VettingLog | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Récupération des données depuis l'API
-  useEffect(() => {
+  // États pour la sécurité (Login)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [loginError, setLoginError] = useState(false);
+
+  // Fonction de connexion
+  const handleLogin = async () => {
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: passwordInput }),
+      });
+      if (res.ok) {
+        setIsAuthenticated(true);
+        fetchLogs();
+      } else {
+        setLoginError(true);
+      }
+    } catch (err) {
+      setLoginError(true);
+    }
+  };
+
+  // Chargement des données depuis la DB
+  const fetchLogs = () => {
     fetch("/api/admin/fetch-logs")
       .then((res) => res.json())
       .then((data) => {
@@ -26,24 +50,16 @@ export default function AdminDashboard() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Erreur dashboard:", err);
+        console.error("Erreur fetch:", err);
         setLoading(false);
       });
-  }, []);
+  };
 
-  // Fonction de rendu robuste pour l'historique (corrige l'erreur de formatage)
+  // Rendu des bulles de chat (Correction de l'erreur de formatage)
   const renderConversation = (data: any) => {
     try {
-      // Sécurité : si la donnée est une chaîne, on la parse. Si c'est déjà un objet, on l'utilise.
       const messages = typeof data === "string" ? JSON.parse(data) : data;
-
-      if (!Array.isArray(messages)) {
-        return (
-          <p style={{ color: "#A1A1A6", fontSize: "14px" }}>
-            Aucun message à afficher.
-          </p>
-        );
-      }
+      if (!Array.isArray(messages)) return <p>Format non supporté.</p>;
 
       return messages.map((msg: any, i: number) => (
         <div
@@ -78,13 +94,96 @@ export default function AdminDashboard() {
       ));
     } catch (e) {
       return (
-        <p style={{ color: "#FF3B30", fontSize: "14px" }}>
-          Erreur de rendu de la conversation.
-        </p>
+        <p style={{ color: "#FF3B30" }}>Erreur d'affichage de la discussion.</p>
       );
     }
   };
 
+  // ÉCRAN 1 : FORMULAIRE DE CONNEXION
+  if (!isAuthenticated) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#F5F5F7",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "-apple-system, sans-serif",
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "white",
+            padding: "50px",
+            borderRadius: "40px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.1)",
+            textAlign: "center",
+            width: "400px",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "26px",
+              fontWeight: "800",
+              marginBottom: "10px",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Maison Trille
+          </h1>
+          <p
+            style={{ color: "#A1A1A6", fontSize: "14px", marginBottom: "30px" }}
+          >
+            Accès réservé à l'administration
+          </p>
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            style={{
+              width: "100%",
+              padding: "15px",
+              borderRadius: "15px",
+              border: loginError ? "1px solid #FF3B30" : "1px solid #F2F2F7",
+              backgroundColor: "#F9F9FB",
+              marginBottom: "20px",
+              outline: "none",
+              textAlign: "center",
+              fontSize: "16px",
+            }}
+          />
+          <button
+            onClick={handleLogin}
+            style={{
+              width: "100%",
+              padding: "15px",
+              borderRadius: "15px",
+              border: "none",
+              background: "#007AFF",
+              color: "white",
+              fontWeight: "700",
+              cursor: "pointer",
+              fontSize: "16px",
+            }}
+          >
+            Accéder au Dashboard
+          </button>
+          {loginError && (
+            <p
+              style={{ color: "#FF3B30", fontSize: "13px", marginTop: "15px" }}
+            >
+              Identifiant incorrect.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ÉCRAN 2 : LE DASHBOARD
   return (
     <div
       style={{
@@ -94,24 +193,46 @@ export default function AdminDashboard() {
         fontFamily: "-apple-system, sans-serif",
       }}
     >
-      <header style={{ marginBottom: "40px" }}>
-        {/* letterSpacing remplace tracking pour corriger l'erreur de style */}
-        <h1
+      <header
+        style={{
+          marginBottom: "40px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: "32px",
+              fontWeight: "800",
+              letterSpacing: "-0.04em",
+            }}
+          >
+            MONITORING
+          </h1>
+          <p style={{ color: "#A1A1A6", fontSize: "14px" }}>
+            Flux d'audit en temps réel
+          </p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
           style={{
-            fontSize: "32px",
-            fontWeight: "800",
-            letterSpacing: "-0.04em",
+            background: "white",
+            border: "1px solid #E5E5E7",
+            padding: "10px 20px",
+            borderRadius: "12px",
+            cursor: "pointer",
+            fontSize: "14px",
+            fontWeight: "600",
           }}
         >
-          MONITORING
-        </h1>
-        <p style={{ color: "#A1A1A6", fontSize: "14px" }}>
-          Maison Trille — Gestion des flux d'audit IA
-        </p>
+          Déconnexion
+        </button>
       </header>
 
       <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
-        {/* LISTE DES SESSIONS */}
+        {/* LISTE */}
         <div
           style={{
             flex: "1.5",
@@ -130,13 +251,8 @@ export default function AdminDashboard() {
           >
             Sessions Récentes
           </h2>
-
           {loading ? (
-            <div
-              style={{ padding: "20px", textAlign: "center", color: "#A1A1A6" }}
-            >
-              Chargement...
-            </div>
+            <p>Chargement...</p>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -146,7 +262,6 @@ export default function AdminDashboard() {
                     fontSize: "11px",
                     color: "#A1A1A6",
                     textTransform: "uppercase",
-                    letterSpacing: "0.1em",
                   }}
                 >
                   <th style={{ padding: "15px 10px" }}>Date</th>
@@ -159,24 +274,17 @@ export default function AdminDashboard() {
                 {logs.map((log) => (
                   <tr key={log.id} style={{ borderTop: "1px solid #F2F2F7" }}>
                     <td style={{ padding: "15px 10px", fontSize: "13px" }}>
-                      {new Date(log.created_at).toLocaleDateString("fr-FR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {new Date(log.created_at).toLocaleDateString("fr-FR")}
                     </td>
-                    <td style={{ padding: "15px 10px" }}>
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color:
-                            log.status === "SUCCESS" ? "#34C759" : "#FF3B30",
-                        }}
-                      >
-                        ● {log.status}
-                      </span>
+                    <td
+                      style={{
+                        padding: "15px 10px",
+                        color: log.status === "SUCCESS" ? "#34C759" : "#FF3B30",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      ● {log.status}
                     </td>
                     <td
                       style={{
@@ -198,7 +306,6 @@ export default function AdminDashboard() {
                           borderRadius: "10px",
                           cursor: "pointer",
                           fontSize: "12px",
-                          fontWeight: "600",
                         }}
                       >
                         Détails
@@ -211,7 +318,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* HISTORIQUE DE LA CONVERSATION */}
+        {/* CHAT LOG */}
         <div
           style={{
             flex: "1",
@@ -220,8 +327,6 @@ export default function AdminDashboard() {
             padding: "30px",
             minHeight: "600px",
             boxShadow: "0 10px 30px rgba(0,0,0,0.03)",
-            display: "flex",
-            flexDirection: "column",
           }}
         >
           <h2
@@ -233,30 +338,19 @@ export default function AdminDashboard() {
           >
             Historique Chat
           </h2>
-
-          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-            {selectedLog ? (
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {renderConversation(selectedLog.conversation_data)}
-              </div>
-            ) : (
-              <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#D1D1D6",
-                  textAlign: "center",
-                  fontSize: "14px",
-                }}
-              >
-                Sélectionnez une session
-                <br />
-                pour analyser l'échange.
-              </div>
-            )}
-          </div>
+          {selectedLog ? (
+            renderConversation(selectedLog.conversation_data)
+          ) : (
+            <p
+              style={{
+                color: "#D1D1D6",
+                textAlign: "center",
+                marginTop: "100px",
+              }}
+            >
+              Sélectionnez une session.
+            </p>
+          )}
         </div>
       </div>
     </div>
