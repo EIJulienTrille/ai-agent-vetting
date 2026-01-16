@@ -1,14 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-// Définition de l'interface pour supprimer l'erreur sur conversation_data
+// Interface pour sécuriser l'accès aux données (évite l'erreur conversation_data)
 interface VettingLog {
   id: string;
   created_at: string;
   agency_id: string;
   status: string;
   verdict: string;
-  conversation_data: string; // Stocké en texte JSON dans la DB
+  conversation_data: any; // On utilise any ici car le JSONB peut arriver déjà parsé
   error_message?: string;
 }
 
@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const [selectedLog, setSelectedLog] = useState<VettingLog | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Récupération des données
+  // Récupération des données depuis l'API
   useEffect(() => {
     fetch("/api/admin/fetch-logs")
       .then((res) => res.json())
@@ -31,23 +31,34 @@ export default function AdminDashboard() {
       });
   }, []);
 
-  // Fonction de rendu des bulles de chat
-  const renderConversation = (jsonData: string) => {
+  // Fonction de rendu robuste pour l'historique (corrige l'erreur de formatage)
+  const renderConversation = (data: any) => {
     try {
-      const messages = JSON.parse(jsonData);
+      // Sécurité : si la donnée est une chaîne, on la parse. Si c'est déjà un objet, on l'utilise.
+      const messages = typeof data === "string" ? JSON.parse(data) : data;
+
+      if (!Array.isArray(messages)) {
+        return (
+          <p style={{ color: "#A1A1A6", fontSize: "14px" }}>
+            Aucun message à afficher.
+          </p>
+        );
+      }
+
       return messages.map((msg: any, i: number) => (
         <div
           key={i}
           style={{
             padding: "12px 20px",
             borderRadius: "15px",
-            fontSize: "14px",
+            fontSize: "13px",
             marginBottom: "10px",
             backgroundColor: msg.role === "user" ? "#F2F2F7" : "#007AFF",
             color: msg.role === "user" ? "#1d1d1f" : "white",
             alignSelf: msg.role === "user" ? "flex-start" : "flex-end",
             maxWidth: "85%",
             boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+            wordBreak: "break-word",
           }}
         >
           <p
@@ -57,6 +68,7 @@ export default function AdminDashboard() {
               opacity: 0.7,
               fontWeight: "bold",
               marginBottom: "4px",
+              textTransform: "uppercase",
             }}
           >
             {msg.role === "user" ? "PROSPECT" : "AGENT IA"}
@@ -66,7 +78,9 @@ export default function AdminDashboard() {
       ));
     } catch (e) {
       return (
-        <p style={{ color: "#FF3B30" }}>Erreur de formatage des messages.</p>
+        <p style={{ color: "#FF3B30", fontSize: "14px" }}>
+          Erreur de rendu de la conversation.
+        </p>
       );
     }
   };
@@ -81,7 +95,7 @@ export default function AdminDashboard() {
       }}
     >
       <header style={{ marginBottom: "40px" }}>
-        {/* Correction : letterSpacing au lieu de tracking */}
+        {/* letterSpacing remplace tracking pour corriger l'erreur de style */}
         <h1
           style={{
             fontSize: "32px",
@@ -145,7 +159,12 @@ export default function AdminDashboard() {
                 {logs.map((log) => (
                   <tr key={log.id} style={{ borderTop: "1px solid #F2F2F7" }}>
                     <td style={{ padding: "15px 10px", fontSize: "13px" }}>
-                      {new Date(log.created_at).toLocaleDateString("fr-FR")}
+                      {new Date(log.created_at).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </td>
                     <td style={{ padding: "15px 10px" }}>
                       <span
@@ -192,7 +211,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* DÉTAILS DE LA CONVERSATION */}
+        {/* HISTORIQUE DE LA CONVERSATION */}
         <div
           style={{
             flex: "1",
@@ -234,7 +253,7 @@ export default function AdminDashboard() {
               >
                 Sélectionnez une session
                 <br />
-                pour voir l'échange.
+                pour analyser l'échange.
               </div>
             )}
           </div>
