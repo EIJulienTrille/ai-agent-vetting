@@ -24,30 +24,50 @@ export default function ChatInterface() {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
+    // 1. Ajouter le message de l'utilisateur à l'interface
     const userMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
+      // 2. Préparation de l'historique textuel pour Gemini
+      // On transforme le tableau d'objets en une seule chaîne de texte propre
+      const chatHistory = messages
+        .map((m) => `${m.role === "user" ? "Client" : "Expert"}: ${m.content}`)
+        .join("\n");
+
+      // 3. Appel à l'API (Route : /api/chat)
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: input,
-          history: messages.map((m) => `${m.role}: ${m.content}`).join("\n"),
+          history: chatHistory,
         }),
       });
 
       const data = await response.json();
+
+      // 4. Vérification de la validité de la réponse
+      if (!response.ok) {
+        throw new Error(data.text || "Erreur serveur");
+      }
+
+      // 5. Mise à jour de l'interface avec la réponse de Gemini
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.text },
       ]);
     } catch (err) {
+      console.error("Erreur ChatInterface:", err);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Erreur de connexion avec l'expert." },
+        {
+          role: "assistant",
+          content:
+            "L'expert Maison Trille rencontre une difficulté de connexion. Veuillez réessayer.",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -64,6 +84,7 @@ export default function ChatInterface() {
         backgroundColor: "white",
       }}
     >
+      {/* ZONE DE MESSAGES */}
       <div
         style={{
           flex: 1,
@@ -86,19 +107,24 @@ export default function ChatInterface() {
               backgroundColor: m.role === "user" ? "#007AFF" : "#F2F2F7",
               color: m.role === "user" ? "white" : "black",
               fontSize: "15px",
+              boxShadow:
+                m.role === "user" ? "0 4px 15px rgba(0,122,255,0.2)" : "none",
             }}
           >
             {m.content}
           </div>
         ))}
         {loading && (
-          <p style={{ color: "#8E8E93", fontSize: "12px" }}>
+          <p
+            style={{ color: "#8E8E93", fontSize: "12px", fontStyle: "italic" }}
+          >
             Maison Trille analyse votre réponse...
           </p>
         )}
         <div ref={messagesEndRef} />
       </div>
 
+      {/* ZONE D'INPUT */}
       <div style={{ padding: "20px 30px", borderTop: "1px solid #F2F2F7" }}>
         <div
           style={{
@@ -116,28 +142,31 @@ export default function ChatInterface() {
             disabled={loading}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Répondez ici..."
+            placeholder="Écrivez votre réponse..."
             style={{
               flex: 1,
               border: "none",
               backgroundColor: "transparent",
               padding: "10px",
               outline: "none",
+              fontSize: "15px",
             }}
           />
           <button
             onClick={handleSend}
-            disabled={loading}
+            disabled={loading || !input.trim()}
             style={{
-              backgroundColor: "#007AFF",
+              backgroundColor: loading || !input.trim() ? "#E5E5E7" : "#007AFF",
               color: "white",
               border: "none",
-              padding: "10px 20px",
+              padding: "10px 24px",
               borderRadius: "12px",
-              cursor: "pointer",
+              fontWeight: "600",
+              cursor: loading || !input.trim() ? "default" : "pointer",
+              transition: "background 0.2s ease",
             }}
           >
-            Envoyer
+            {loading ? "..." : "Envoyer"}
           </button>
         </div>
       </div>

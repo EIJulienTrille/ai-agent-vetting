@@ -7,9 +7,11 @@ export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
-    // Vérification de la clé API pour éviter l'erreur technique silencieuse
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error("Clé API manquante dans Vercel");
+      return NextResponse.json(
+        { text: "Clé API manquante sur Vercel.", analysis: null },
+        { status: 500 }
+      );
     }
 
     const model = genAI.getGenerativeModel({
@@ -17,19 +19,14 @@ export async function POST(req: Request) {
       generationConfig: { responseMimeType: "application/json" },
     });
 
-    // CORRECTION : On s'assure que history est bien traité comme du texte
-    const formattedHistory = Array.isArray(history)
-      ? history.map((m: any) => `${m.role}: ${m.content}`).join("\n")
-      : history;
-
-    const prompt = `Tu es l'Expert de Qualification de Maison Trille. Ton ton est prestigieux.
-    
+    // On s'assure que l'historique est une chaîne propre
+    const prompt = `Tu es l'Expert de Qualification de Maison Trille.
     TON RÔLE : Poser 5 questions éliminatoires (une par une).
-    IMPORTANT : Tu dois impérativement répondre en JSON STRICT.
+    IMPORTANT : Réponds UNIQUEMENT au format JSON strict.
     
     STRUCTURE JSON :
     {
-      "text": "Ta réponse élégante avec la question suivante",
+      "text": "Ta réponse élégante ici",
       "analysis": {
         "name": "Nom extrait",
         "budget": "Fonds",
@@ -37,29 +34,33 @@ export async function POST(req: Request) {
       }
     }
     
-    HISTORIQUE CONVERSATION :
-    ${formattedHistory}
+    HISTORIQUE DE LA CONVERSATION :
+    ${history}
     
-    DERNIER MESSAGE CLIENT : 
+    MESSAGE ACTUEL DU CLIENT :
     ${message}`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    // Sécurité supplémentaire si l'IA renvoie quand même des balises
-    const cleanJson = responseText
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    return NextResponse.json(JSON.parse(cleanJson));
+    try {
+      // Nettoyage au cas où Gemini ajouterait des balises markdown malgré la config
+      const cleanJson = responseText
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+      return NextResponse.json(JSON.parse(cleanJson));
+    } catch (parseError) {
+      console.error("Erreur de parsing JSON:", responseText);
+      return NextResponse.json({
+        text: "Je n'ai pas pu formater ma réponse. Pouvez-vous répéter ?",
+        analysis: null,
+      });
+    }
   } catch (error: any) {
-    console.error("Erreur Gemini détaillée:", error);
+    console.error("Erreur Serveur:", error);
     return NextResponse.json(
-      {
-        text: "Maison Trille : Je rencontre une difficulté technique pour analyser votre demande. Veuillez m'excuser et réessayer.",
-        analysis: { name: "-", budget: "-", project: "ERREUR" },
-      },
+      { text: "Erreur technique Maison Trille." },
       { status: 500 }
     );
   }
