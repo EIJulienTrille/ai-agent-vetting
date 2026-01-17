@@ -98,7 +98,7 @@ export default function ChatInterface() {
     <div
       style={{
         backgroundColor: "#F5F5F7",
-        minHeight: "100vh",
+        minHeight: "100%",
         padding: "40px 60px",
         display: "flex",
         alignItems: "center",

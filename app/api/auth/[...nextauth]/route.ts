@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
+import type { NextAuthOptions } from "next-auth"; // Ajout du type pour plus de sécurité
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@vercel/postgres";
 import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+// 1. On définit et on EXPORTE la configuration
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -13,15 +15,11 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
-        // On cherche l'utilisateur dans la table SQL
         const { rows } = await db.query(
           "SELECT * FROM users WHERE email = $1",
           [credentials.email]
         );
         const user = rows[0];
-
-        // On vérifie le mot de passe crypté
         if (
           user &&
           (await bcrypt.compare(credentials.password, user.password))
@@ -32,13 +30,12 @@ const handler = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: "/login", // On définit notre future page de connexion personnalisée
-  },
-  session: {
-    strategy: "jwt",
-  },
+  pages: { signIn: "/login" },
+  session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+// 2. Le handler utilise cette configuration
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
