@@ -1,9 +1,31 @@
 "use client";
 import { signOut, useSession } from "next-auth/react";
 import React from "react";
+import Link from "next/link"; // Import indispensable
+import { usePathname } from "next/navigation"; // Pour savoir sur quelle page on est
 
 export default function Sidebar() {
   const { data: session } = useSession();
+  const pathname = usePathname(); // Récupère l'URL actuelle (ex: /history)
+
+  // Fonction pour styliser le bouton actif
+  const getButtonStyle = (path: string) => ({
+    width: "100%",
+    textAlign: "left" as const,
+    padding: "12px 16px",
+    borderRadius: "12px",
+    backgroundColor: pathname === path ? "#2c2c2e" : "transparent", // Gris foncé si actif
+    color: pathname === path ? "#007AFF" : "white", // Bleu si actif
+    border: "none",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: pathname === path ? "700" : "500",
+    transition: "all 0.2s ease",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    textDecoration: "none",
+  });
 
   return (
     <div
@@ -19,11 +41,11 @@ export default function Sidebar() {
         left: 0,
         top: 0,
         zIndex: 100,
-        boxSizing: "border-box", // CRUCIAL : inclut le padding dans le calcul de la hauteur
+        boxSizing: "border-box",
       }}
     >
-      {/* SECTION HAUT : TITRE */}
-      <div style={{ marginBottom: "40px" }}>
+      {/* LOGO */}
+      <div style={{ marginBottom: "40px", paddingLeft: "8px" }}>
         <h2
           style={{
             fontSize: "20px",
@@ -35,32 +57,40 @@ export default function Sidebar() {
         </h2>
       </div>
 
-      {/* SECTION MILIEU : NAVIGATION */}
+      {/* NAVIGATION AVEC LINK */}
       <nav
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
+          gap: "4px",
         }}
       >
-        <button style={navButtonStyle}>🏠 Messagerie</button>
-        <button style={navButtonStyle}>📜 Historique</button>
-        <button style={navButtonStyle}>👤 Mon Compte</button>
+        <Link href="/" style={getButtonStyle("/")}>
+          <span>🏠</span> Messagerie
+        </Link>
+
+        <Link href="/history" style={getButtonStyle("/history")}>
+          <span>📜</span> Historique
+        </Link>
+
+        <Link href="/account" style={getButtonStyle("/account")}>
+          <span>👤</span> Mon Compte
+        </Link>
       </nav>
 
-      {/* SECTION BAS : UTILISATEUR ET DÉCONNEXION */}
+      {/* BAS DE SIDEBAR : UTILISATEUR */}
       <div
         style={{
           borderTop: "1px solid #333",
           paddingTop: "20px",
-          marginTop: "auto", // Pousse ce bloc tout en bas
+          marginTop: "auto",
           display: "flex",
           flexDirection: "column",
           gap: "10px",
         }}
       >
-        <div style={{ overflow: "hidden" }}>
+        <div style={{ paddingLeft: "8px" }}>
           <p
             style={{
               fontSize: "11px",
@@ -95,15 +125,8 @@ export default function Sidebar() {
             border: "none",
             fontWeight: "700",
             cursor: "pointer",
-            transition: "background 0.2s",
-            fontSize: "14px",
+            marginTop: "10px",
           }}
-          onMouseOver={(e) =>
-            (e.currentTarget.style.backgroundColor = "#E03126")
-          }
-          onMouseOut={(e) =>
-            (e.currentTarget.style.backgroundColor = "#FF3B30")
-          }
         >
           Déconnexion
         </button>
@@ -111,17 +134,3 @@ export default function Sidebar() {
     </div>
   );
 }
-
-const navButtonStyle = {
-  width: "100%",
-  textAlign: "left" as const,
-  padding: "12px",
-  borderRadius: "10px",
-  backgroundColor: "transparent",
-  color: "white",
-  border: "none",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: "500",
-  transition: "background 0.2s",
-};
