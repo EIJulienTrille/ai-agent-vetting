@@ -10,7 +10,7 @@ export default function ChatInterface() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // État pour le chargement
+  const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -22,15 +22,14 @@ export default function ChatInterface() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || loading) return;
 
     const userMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      // APPEL RÉEL À GEMINI 3 FLASH
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,21 +40,17 @@ export default function ChatInterface() {
       });
 
       const data = await response.json();
-
-      if (data.text) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.text },
-        ]);
-      }
-    } catch (error) {
-      console.error("Erreur chat:", error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Désolé, j'ai une erreur technique." },
+        { role: "assistant", content: data.text },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Erreur de connexion avec l'expert." },
       ]);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -91,28 +86,20 @@ export default function ChatInterface() {
               backgroundColor: m.role === "user" ? "#007AFF" : "#F2F2F7",
               color: m.role === "user" ? "white" : "black",
               fontSize: "15px",
-              lineHeight: "1.4",
             }}
           >
             {m.content}
           </div>
         ))}
-        {isLoading && (
-          <p style={{ fontSize: "12px", color: "#8E8E93" }}>
-            Maison Trille réfléchit...
+        {loading && (
+          <p style={{ color: "#8E8E93", fontSize: "12px" }}>
+            Maison Trille analyse votre réponse...
           </p>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div
-        style={{
-          padding: "20px 30px",
-          borderTop: "1px solid #F2F2F7",
-          backgroundColor: "white",
-          flexShrink: 0,
-        }}
-      >
+      <div style={{ padding: "20px 30px", borderTop: "1px solid #F2F2F7" }}>
         <div
           style={{
             display: "flex",
@@ -126,33 +113,31 @@ export default function ChatInterface() {
           <input
             type="text"
             value={input}
-            disabled={isLoading}
+            disabled={loading}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Écrivez votre message..."
+            placeholder="Répondez ici..."
             style={{
               flex: 1,
               border: "none",
               backgroundColor: "transparent",
               padding: "10px",
               outline: "none",
-              fontSize: "15px",
             }}
           />
           <button
             onClick={handleSend}
-            disabled={isLoading}
+            disabled={loading}
             style={{
-              backgroundColor: isLoading ? "#ccc" : "#007AFF",
+              backgroundColor: "#007AFF",
               color: "white",
               border: "none",
               padding: "10px 20px",
               borderRadius: "12px",
-              fontWeight: "600",
-              cursor: isLoading ? "default" : "pointer",
+              cursor: "pointer",
             }}
           >
-            {isLoading ? "..." : "Envoyer"}
+            Envoyer
           </button>
         </div>
       </div>
