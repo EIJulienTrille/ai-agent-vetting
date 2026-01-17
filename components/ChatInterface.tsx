@@ -10,9 +10,9 @@ export default function ChatInterface() {
     },
   ]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // État pour le chargement
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll automatique vers le bas à chaque nouveau message
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -22,23 +22,41 @@ export default function ChatInterface() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setIsLoading(true);
 
-    // Simulation de réponse IA (à remplacer par votre appel API OpenAI/Mistral)
-    setTimeout(() => {
+    try {
+      // APPEL RÉEL À GEMINI 3 FLASH
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: input,
+          history: messages.map((m) => `${m.role}: ${m.content}`).join("\n"),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.text) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.text },
+        ]);
+      }
+    } catch (error) {
+      console.error("Erreur chat:", error);
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content:
-            "Merci pour cette précision. Pour continuer l'audit, j'ai besoin de connaître votre capacité financière.",
-        },
+        { role: "assistant", content: "Désolé, j'ai une erreur technique." },
       ]);
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,12 +64,11 @@ export default function ChatInterface() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100%", // Prend 100% du conteneur parent défini dans page.tsx
+        height: "100%",
         width: "100%",
         backgroundColor: "white",
       }}
     >
-      {/* 1. ZONE DES MESSAGES (Flexible et Scrollable) */}
       <div
         style={{
           flex: 1,
@@ -75,22 +92,25 @@ export default function ChatInterface() {
               color: m.role === "user" ? "white" : "black",
               fontSize: "15px",
               lineHeight: "1.4",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
             }}
           >
             {m.content}
           </div>
         ))}
+        {isLoading && (
+          <p style={{ fontSize: "12px", color: "#8E8E93" }}>
+            Maison Trille réfléchit...
+          </p>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 2. BARRE DE RÉDACTION (Fixe en bas) */}
       <div
         style={{
           padding: "20px 30px",
           borderTop: "1px solid #F2F2F7",
           backgroundColor: "white",
-          flexShrink: 0, // Empêche cette barre de s'écraser
+          flexShrink: 0,
         }}
       >
         <div
@@ -106,6 +126,7 @@ export default function ChatInterface() {
           <input
             type="text"
             value={input}
+            disabled={isLoading}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Écrivez votre message..."
@@ -120,22 +141,18 @@ export default function ChatInterface() {
           />
           <button
             onClick={handleSend}
+            disabled={isLoading}
             style={{
-              backgroundColor: "#007AFF",
+              backgroundColor: isLoading ? "#ccc" : "#007AFF",
               color: "white",
               border: "none",
               padding: "10px 20px",
               borderRadius: "12px",
               fontWeight: "600",
-              cursor: "pointer",
-              transition: "transform 0.1s",
+              cursor: isLoading ? "default" : "pointer",
             }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.transform = "scale(0.95)")
-            }
-            onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
           >
-            Envoyer
+            {isLoading ? "..." : "Envoyer"}
           </button>
         </div>
       </div>
