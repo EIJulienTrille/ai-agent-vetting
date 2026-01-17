@@ -35,34 +35,58 @@ export default function Home() {
           display: "flex",
           flexDirection: "column",
           height: "100vh",
-          padding: "20px 40px", // Réduction du padding pour gagner de la place
+          padding: "50px 60px 30px 60px", // Augmentation du padding haut (50px) et latéral (60px)
         }}
       >
-        {/* En-tête avec hauteur fixe pour ne pas écraser le reste */}
-        <header style={{ flexShrink: 0, marginBottom: "15px" }}>
-          <h1 style={{ fontSize: "24px", fontWeight: "800", color: "#1d1d1f" }}>
+        {/* En-tête aérée */}
+        <header style={{ flexShrink: 0, marginBottom: "30px" }}>
+          <h1
+            style={{
+              fontSize: "32px",
+              fontWeight: "800",
+              color: "#1d1d1f",
+              letterSpacing: "-0.03em",
+              marginBottom: "8px",
+            }}
+          >
             Messagerie
           </h1>
-          <p style={{ color: "#8E8E93", fontSize: "13px" }}>
-            Expertise Maison Trille
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+              style={{
+                width: "8px",
+                height: "8px",
+                backgroundColor: "#34C759",
+                borderRadius: "50%",
+              }}
+            ></span>
+            <p
+              style={{ color: "#8E8E93", fontSize: "14px", fontWeight: "500" }}
+            >
+              Expertise Maison Trille — Audit en cours
+            </p>
+          </div>
         </header>
 
-        {/* CONTENEUR DYNAMIQUE DU CHAT */}
+        {/* Conteneur du Chat */}
         <div
           style={{
-            flex: 1, // Prend TOUT l'espace restant mathématiquement
+            flex: 1,
             backgroundColor: "white",
-            borderRadius: "24px",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
+            borderRadius: "32px", // Coins plus arrondis pour un aspect plus moderne
+            boxShadow: "0 20px 60px rgba(0,0,0,0.04)",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
-            minHeight: 0, // Très important pour forcer le scroll interne
+            minHeight: 0,
+            border: "1px solid rgba(0,0,0,0.05)",
           }}
         >
           <ChatInterface />
         </div>
+
+        {/* Petit footer discret pour l'espace */}
+        <footer style={{ height: "20px", flexShrink: 0 }}></footer>
       </main>
     </div>
   );
