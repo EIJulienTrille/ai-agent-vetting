@@ -14,12 +14,15 @@ export default function Sidebar() {
         color: "white",
         display: "flex",
         flexDirection: "column",
-        padding: "20px",
+        padding: "24px",
         position: "fixed",
         left: 0,
         top: 0,
+        zIndex: 100,
+        boxSizing: "border-box", // CRUCIAL : inclut le padding dans le calcul de la hauteur
       }}
     >
+      {/* SECTION HAUT : TITRE */}
       <div style={{ marginBottom: "40px" }}>
         <h2
           style={{
@@ -32,12 +35,13 @@ export default function Sidebar() {
         </h2>
       </div>
 
+      {/* SECTION MILIEU : NAVIGATION */}
       <nav
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "10px",
+          gap: "8px",
         }}
       >
         <button style={navButtonStyle}>🏠 Messagerie</button>
@@ -45,27 +49,61 @@ export default function Sidebar() {
         <button style={navButtonStyle}>👤 Mon Compte</button>
       </nav>
 
-      <div style={{ borderTop: "1px solid #333", paddingTop: "20px" }}>
-        <p style={{ fontSize: "12px", color: "#A1A1A6", marginBottom: "10px" }}>
-          Connecté en tant que :
-        </p>
-        <p
-          style={{ fontSize: "14px", fontWeight: "600", marginBottom: "20px" }}
-        >
-          {session?.user?.name}
-        </p>
+      {/* SECTION BAS : UTILISATEUR ET DÉCONNEXION */}
+      <div
+        style={{
+          borderTop: "1px solid #333",
+          paddingTop: "20px",
+          marginTop: "auto", // Pousse ce bloc tout en bas
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+        }}
+      >
+        <div style={{ overflow: "hidden" }}>
+          <p
+            style={{
+              fontSize: "11px",
+              color: "#A1A1A6",
+              marginBottom: "4px",
+              textTransform: "uppercase",
+            }}
+          >
+            Client connecté
+          </p>
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: "600",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {session?.user?.name || "Utilisateur"}
+          </p>
+        </div>
+
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           style={{
             width: "100%",
-            padding: "10px",
-            borderRadius: "8px",
+            padding: "12px",
+            borderRadius: "12px",
             backgroundColor: "#FF3B30",
             color: "white",
             border: "none",
-            fontWeight: "bold",
+            fontWeight: "700",
             cursor: "pointer",
+            transition: "background 0.2s",
+            fontSize: "14px",
           }}
+          onMouseOver={(e) =>
+            (e.currentTarget.style.backgroundColor = "#E03126")
+          }
+          onMouseOut={(e) =>
+            (e.currentTarget.style.backgroundColor = "#FF3B30")
+          }
         >
           Déconnexion
         </button>
@@ -78,12 +116,12 @@ const navButtonStyle = {
   width: "100%",
   textAlign: "left" as const,
   padding: "12px",
-  borderRadius: "8px",
+  borderRadius: "10px",
   backgroundColor: "transparent",
   color: "white",
   border: "none",
   cursor: "pointer",
-  fontSize: "15px",
-  transition: "background 0.2s",
+  fontSize: "14px",
   fontWeight: "500",
+  transition: "background 0.2s",
 };
