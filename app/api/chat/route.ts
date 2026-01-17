@@ -7,46 +7,59 @@ export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
+    // Vérification de la clé API pour éviter l'erreur technique silencieuse
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Clé API manquante dans Vercel");
+    }
+
     const model = genAI.getGenerativeModel({
       model: "gemini-3-flash-preview",
-      // Cette ligne force Gemini à sortir du JSON pur sans balises markdown
       generationConfig: { responseMimeType: "application/json" },
     });
 
-    const prompt = `Tu es l'Expert de Qualification de Maison Trille. 
-    Ton ton est prestigieux et courtois.
-    
-    TON RÔLE : Poser 5 questions éliminatoires une par une :
-    1. Identité (Nom propre ou tiers)
-    2. Capacité de fonds (Preuve bancaire)
-    3. Délai (90 jours)
-    4. Critères rédhibitoires
-    5. Accord de confidentialité (NDA).
+    // CORRECTION : On s'assure que history est bien traité comme du texte
+    const formattedHistory = Array.isArray(history)
+      ? history.map((m: any) => `${m.role}: ${m.content}`).join("\n")
+      : history;
 
-    RÈGLE D'OR : Si le client n'a pas de fonds ou refuse le NDA, le projet est "NON RECEVABLE".
+    const prompt = `Tu es l'Expert de Qualification de Maison Trille. Ton ton est prestigieux.
     
-    RÉPONDS EXCLUSIVEMENT AU FORMAT JSON SUIVANT :
+    TON RÔLE : Poser 5 questions éliminatoires (une par une).
+    IMPORTANT : Tu dois impérativement répondre en JSON STRICT.
+    
+    STRUCTURE JSON :
     {
-      "text": "Ta réponse élégante ici",
+      "text": "Ta réponse élégante avec la question suivante",
       "analysis": {
-        "name": "Nom extrait ou '-'",
-        "budget": "Budget détecté",
+        "name": "Nom extrait",
+        "budget": "Fonds",
         "project": "RECEVABLE, NON RECEVABLE ou EN COURS"
       }
     }
     
-    HISTORIQUE : ${history}
-    MESSAGE ACTUEL : ${message}`;
+    HISTORIQUE CONVERSATION :
+    ${formattedHistory}
+    
+    DERNIER MESSAGE CLIENT : 
+    ${message}`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    // On renvoie directement la réponse parsée
-    return NextResponse.json(JSON.parse(responseText));
+    // Sécurité supplémentaire si l'IA renvoie quand même des balises
+    const cleanJson = responseText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    return NextResponse.json(JSON.parse(cleanJson));
   } catch (error: any) {
-    console.error("Erreur Gemini:", error);
+    console.error("Erreur Gemini détaillée:", error);
     return NextResponse.json(
-      { text: "Erreur technique de communication.", analysis: null },
+      {
+        text: "Maison Trille : Je rencontre une difficulté technique pour analyser votre demande. Veuillez m'excuser et réessayer.",
+        analysis: { name: "-", budget: "-", project: "ERREUR" },
+      },
       { status: 500 }
     );
   }
