@@ -1,70 +1,74 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-// Force Vercel à utiliser l'environnement Node.js standard
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
+// Initialisation de l'IA avec la clé API configurée dans Vercel
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        { text: "Clé API manquante sur Vercel.", analysis: null },
-        { status: 500 }
-      );
-    }
-
+    // Configuration du modèle Gemini 2.5 Flash
     const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
-      generationConfig: { responseMimeType: "application/json" },
+      model: "gemini-2.5-flash",
+      // Force l'IA à répondre en JSON pur pour éviter l'erreur technique de parsing
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
     });
 
-    // On s'assure que l'historique est une chaîne propre
-    const prompt = `Tu es l'Expert de Qualification de Maison Trille.
-    TON RÔLE : Poser 5 questions éliminatoires (une par une).
-    IMPORTANT : Réponds UNIQUEMENT au format JSON strict.
+    const prompt = `Tu es l'Expert de Qualification de Maison Trille. 
+    Ton ton est prestigieux, efficace et extrêmement courtois.
     
-    STRUCTURE JSON :
+    TON RÔLE : 
+    Mener un audit de qualification en posant exactement 5 questions éliminatoires, une par une. 
+    Ne pose jamais deux questions en même temps.
+    
+    LES 5 POINTS À VALIDER (DANS L'ORDRE) :
+    1. Identité : Le client agit-il en son nom propre ou pour un tiers ?
+    2. Capacité de fonds : Le client peut-il fournir une preuve de fonds bancaire immédiate ?
+    3. Délai : Le projet est-il réalisable sous 90 jours ?
+    4. Critères rédhibitoires : Y a-t-il des éléments bloquants ?
+    5. Accord de confidentialité (NDA) : Le client accepte-t-il de signer un NDA ?
+
+    RÈGLE D'OR : 
+    Si le client répond négativement sur les fonds (point 2) ou refuse le NDA (point 5), 
+    le projet doit passer immédiatement en "NON RECEVABLE".
+
+    FORMAT DE RÉPONSE OBLIGATOIRE (JSON STRICT) :
+    Tu dois répondre exclusivement au format JSON suivant :
     {
-      "text": "Ta réponse élégante ici",
+      "text": "Ta réponse élégante et ta question suivante ici",
       "analysis": {
-        "name": "Nom extrait",
-        "budget": "Fonds",
+        "name": "Nom du client",
+        "budget": "Fonds détectés",
         "project": "RECEVABLE, NON RECEVABLE ou EN COURS"
       }
     }
-    
-    HISTORIQUE DE LA CONVERSATION :
-    ${history}
-    
-    MESSAGE ACTUEL DU CLIENT :
-    ${message}`;
+
+    CONTEXTE :
+    Historique : ${history}
+    Dernier message : ${message}`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    try {
-      // Nettoyage au cas où Gemini ajouterait des balises markdown malgré la config
-      const cleanJson = responseText
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
-      return NextResponse.json(JSON.parse(cleanJson));
-    } catch (parseError) {
-      console.error("Erreur de parsing JSON:", responseText);
-      return NextResponse.json({
-        text: "Je n'ai pas pu formater ma réponse. Pouvez-vous répéter ?",
-        analysis: null,
-      });
-    }
+    // Nettoyage de sécurité pour garantir un JSON valide
+    const cleanJson = responseText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    return NextResponse.json(JSON.parse(cleanJson));
   } catch (error: any) {
-    console.error("Erreur Serveur:", error);
+    console.error("Erreur API Maison Trille:", error);
+
+    // Réponse de secours pour l'interface en cas d'erreur 429 ou 500
     return NextResponse.json(
-      { text: "Erreur technique Maison Trille." },
+      {
+        text: "Maison Trille : Je rencontre une difficulté technique ou une limite de quota. Veuillez patienter un instant.",
+        analysis: { name: "-", budget: "-", project: "ERREUR" },
+      },
       { status: 500 }
     );
   }
