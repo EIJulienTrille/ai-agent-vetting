@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-// Interface pour sécuriser l'accès aux données Postgres
+// Interface pour sécuriser l'accès aux données
 interface VettingLog {
   id: string;
   created_at: string;
@@ -22,21 +22,28 @@ export default function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState(false);
 
-  // Fonction de connexion
+  // FONCTION DE CONNEXION (Corrigée avec les Headers JSON)
   const handleLogin = async () => {
+    setLoginError(false);
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json", // CRUCIAL pour que le serveur lise le mot de passe
+        },
         body: JSON.stringify({ password: passwordInput }),
       });
-      if (res.ok) {
+
+      const data = await res.json();
+
+      if (res.ok && data.authenticated) {
         setIsAuthenticated(true);
         fetchLogs();
       } else {
         setLoginError(true);
       }
     } catch (err) {
+      console.error("Erreur login:", err);
       setLoginError(true);
     }
   };
@@ -55,11 +62,11 @@ export default function AdminDashboard() {
       });
   };
 
-  // Rendu des bulles de chat (Correction de l'erreur de formatage)
+  // Rendu des bulles de chat (Gère le format JSON ou Objet)
   const renderConversation = (data: any) => {
     try {
       const messages = typeof data === "string" ? JSON.parse(data) : data;
-      if (!Array.isArray(messages)) return <p>Format non supporté.</p>;
+      if (!Array.isArray(messages)) return <p>Format de données invalide.</p>;
 
       return messages.map((msg: any, i: number) => (
         <div
@@ -175,7 +182,7 @@ export default function AdminDashboard() {
             <p
               style={{ color: "#FF3B30", fontSize: "13px", marginTop: "15px" }}
             >
-              Identifiant incorrect.
+              Mot de passe incorrect.
             </p>
           )}
         </div>
@@ -232,7 +239,7 @@ export default function AdminDashboard() {
       </header>
 
       <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
-        {/* LISTE */}
+        {/* LISTE DES SESSIONS */}
         <div
           style={{
             flex: "1.5",
@@ -252,7 +259,7 @@ export default function AdminDashboard() {
             Sessions Récentes
           </h2>
           {loading ? (
-            <p>Chargement...</p>
+            <p>Chargement des données...</p>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -327,6 +334,8 @@ export default function AdminDashboard() {
             padding: "30px",
             minHeight: "600px",
             boxShadow: "0 10px 30px rgba(0,0,0,0.03)",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <h2
@@ -338,19 +347,21 @@ export default function AdminDashboard() {
           >
             Historique Chat
           </h2>
-          {selectedLog ? (
-            renderConversation(selectedLog.conversation_data)
-          ) : (
-            <p
-              style={{
-                color: "#D1D1D6",
-                textAlign: "center",
-                marginTop: "100px",
-              }}
-            >
-              Sélectionnez une session.
-            </p>
-          )}
+          <div style={{ flex: 1 }}>
+            {selectedLog ? (
+              renderConversation(selectedLog.conversation_data)
+            ) : (
+              <p
+                style={{
+                  color: "#D1D1D6",
+                  textAlign: "center",
+                  marginTop: "100px",
+                }}
+              >
+                Sélectionnez une session pour voir l'échange.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
