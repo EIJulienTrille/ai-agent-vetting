@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
     // Configuration du modèle Gemini 2.5 Flash
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro-latest",
       // Force l'IA à répondre en JSON pur pour éviter l'erreur technique de parsing
       generationConfig: {
         responseMimeType: "application/json",
