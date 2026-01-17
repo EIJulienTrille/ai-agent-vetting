@@ -35,31 +35,42 @@ export default function Home() {
           display: "flex",
           flexDirection: "column",
           height: "100vh",
-          // On passe à 80px en haut pour vraiment décoller du bord
-          padding: "80px 80px 40px 80px",
+          padding: "0 60px 40px 60px", // On met le padding haut à 0 ici
+          overflow: "hidden",
         }}
       >
-        {/* En-tête : On ajoute une marge interne supplémentaire ici si besoin */}
-        <header style={{ flexShrink: 0, marginBottom: "40px" }}>
+        {/* 1. ESPACEUR DE SÉCURITÉ (Pour Arc et les navigateurs modernes) */}
+        <div style={{ height: "100px", flexShrink: 0 }}></div>
+
+        {/* 2. EN-TÊTE BIEN DESCENDU */}
+        <header style={{ flexShrink: 0, marginBottom: "35px" }}>
           <h1
             style={{
-              fontSize: "36px",
-              fontWeight: "850",
+              fontSize: "38px",
+              fontWeight: "900",
               color: "#1d1d1f",
-              letterSpacing: "-0.04em",
-              marginBottom: "12px",
+              letterSpacing: "-0.05em",
+              margin: 0,
+              lineHeight: "1.2",
             }}
           >
             Messagerie
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginTop: "10px",
+            }}
+          >
             <span
               style={{
                 width: "10px",
                 height: "10px",
                 backgroundColor: "#34C759",
                 borderRadius: "50%",
-                boxShadow: "0 0 8px rgba(52, 199, 89, 0.4)",
+                boxShadow: "0 0 10px rgba(52, 199, 89, 0.5)",
               }}
             ></span>
             <p
@@ -70,18 +81,18 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Conteneur du Chat : Plus de courbes et d'ombre pour la profondeur */}
+        {/* 3. CONTENEUR DU CHAT */}
         <div
           style={{
             flex: 1,
             backgroundColor: "white",
-            borderRadius: "38px",
-            boxShadow: "0 30px 90px rgba(0,0,0,0.06)",
+            borderRadius: "35px",
+            boxShadow: "0 25px 70px rgba(0,0,0,0.05)",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
-            border: "1px solid rgba(0,0,0,0.03)",
+            border: "1px solid rgba(0,0,0,0.04)",
           }}
         >
           <ChatInterface />
