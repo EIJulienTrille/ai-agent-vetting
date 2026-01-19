@@ -1,8 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
+// Structure de message recommandée pour 2026
+interface Message {
+  role: "assistant" | "user";
+  content: string;
+}
+
 export default function ChatInterface() {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content:
@@ -13,48 +19,47 @@ export default function ChatInterface() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Gestion du défilement automatique
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, loading]);
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
-    // 1. Ajouter le message de l'utilisateur à l'interface
-    const userMessage = { role: "user", content: input };
+    // 1. Ajouter le message utilisateur à l'état local
+    const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      // 2. Préparation de l'historique textuel pour Gemini
-      // On transforme le tableau d'objets en une seule chaîne de texte propre
-      const chatHistory = messages
-        .map((m) => `${m.role === "user" ? "Client" : "Expert"}: ${m.content}`)
-        .join("\n");
-
-      // 3. Appel à l'API (Route : /api/chat)
+      // 2. Appel à l'API OpenAI (Route : /api/chat)
+      // L'historique est envoyé pour maintenir le contexte de la conversation
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: input,
-          history: chatHistory,
+          history: messages
+            .map(
+              (m) => `${m.role === "user" ? "Client" : "Expert"}: ${m.content}`
+            )
+            .join("\n"),
         }),
       });
 
       const data = await response.json();
 
-      // 4. Vérification de la validité de la réponse
       if (!response.ok) {
         throw new Error(data.text || "Erreur serveur");
       }
 
-      // 5. Mise à jour de l'interface avec la réponse de Gemini
+      // 3. Ajouter la réponse de GPT-5.1 au chat
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.text },
@@ -75,96 +80,49 @@ export default function ChatInterface() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        width: "100%",
-        backgroundColor: "white",
-      }}
-    >
-      {/* ZONE DE MESSAGES */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "30px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
-        }}
-      >
+    <div className="flex flex-col h-full w-full bg-white font-sans text-gray-900">
+      {/* Zone de messages scrollable */}
+      <div className="flex-1 overflow-y-auto p-6 md:p-10 flex flex-col gap-6">
         {messages.map((m, i) => (
           <div
             key={i}
-            style={{
-              alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-              maxWidth: "75%",
-              padding: "15px 20px",
-              borderRadius:
-                m.role === "user" ? "20px 20px 0 20px" : "20px 20px 20px 0",
-              backgroundColor: m.role === "user" ? "#007AFF" : "#F2F2F7",
-              color: m.role === "user" ? "white" : "black",
-              fontSize: "15px",
-              boxShadow:
-                m.role === "user" ? "0 4px 15px rgba(0,122,255,0.2)" : "none",
-            }}
+            className={`max-w-[80%] p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
+              m.role === "user"
+                ? "self-end bg-blue-600 text-white rounded-br-none"
+                : "self-start bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200"
+            }`}
           >
             {m.content}
           </div>
         ))}
         {loading && (
-          <p
-            style={{ color: "#8E8E93", fontSize: "12px", fontStyle: "italic" }}
-          >
-            Maison Trille analyse votre réponse...
-          </p>
+          <div className="self-start bg-gray-50 p-4 rounded-2xl border border-gray-100 italic text-gray-500 text-sm animate-pulse">
+            Maison Trille analyse votre demande...
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ZONE D'INPUT */}
-      <div style={{ padding: "20px 30px", borderTop: "1px solid #F2F2F7" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            backgroundColor: "#F9F9FB",
-            padding: "8px",
-            borderRadius: "16px",
-            border: "1px solid #E5E5E7",
-          }}
-        >
+      {/* Barre d'entrée de texte fixe */}
+      <div className="p-6 border-t border-gray-100 bg-white">
+        <div className="flex gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
           <input
             type="text"
             value={input}
             disabled={loading}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Écrivez votre réponse..."
-            style={{
-              flex: 1,
-              border: "none",
-              backgroundColor: "transparent",
-              padding: "10px",
-              outline: "none",
-              fontSize: "15px",
-            }}
+            placeholder="Écrivez votre réponse ici..."
+            className="flex-1 bg-transparent p-3 outline-none placeholder-gray-400 text-[15px]"
           />
           <button
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            style={{
-              backgroundColor: loading || !input.trim() ? "#E5E5E7" : "#007AFF",
-              color: "white",
-              border: "none",
-              padding: "10px 24px",
-              borderRadius: "12px",
-              fontWeight: "600",
-              cursor: loading || !input.trim() ? "default" : "pointer",
-              transition: "background 0.2s ease",
-            }}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all shadow-md ${
+              loading || !input.trim()
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+            }`}
           >
             {loading ? "..." : "Envoyer"}
           </button>

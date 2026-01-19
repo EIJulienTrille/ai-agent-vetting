@@ -1,70 +1,88 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
-// Initialisation de l'IA avec la clé API configurée dans Vercel
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Force le rendu dynamique pour éviter les erreurs de cache sur Vercel
+export const dynamic = "force-dynamic";
+
+// Initialisation du client OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
-    // SOLUTION : On récupère le modèle en spécifiant la version de l'API si possible
-    // ou en utilisant le modèle Pro qui a des routes plus stables sur Vercel
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-pro", // Passage au modèle Pro pour forcer une autre route API
-      generationConfig: { responseMimeType: "application/json" },
-    });
-
-    const prompt = `Tu es l'Expert de Qualification de Maison Trille. 
-    Ton ton est prestigieux, efficace et extrêmement courtois.
-    
-    TON RÔLE : 
-    Mener un audit de qualification en posant exactement 5 questions éliminatoires, une par une. 
-    Ne pose jamais deux questions en même temps.
-    
-    LES 5 POINTS À VALIDER (DANS L'ORDRE) :
-    1. Identité : Le client agit-il en son nom propre ou pour un tiers ?
-    2. Capacité de fonds : Le client peut-il fournir une preuve de fonds bancaire immédiate ?
-    3. Délai : Le projet est-il réalisable sous 90 jours ?
-    4. Critères rédhibitoires : Y a-t-il des éléments bloquants ?
-    5. Accord de confidentialité (NDA) : Le client accepte-t-il de signer un NDA ?
-
-    RÈGLE D'OR : 
-    Si le client répond négativement sur les fonds (point 2) ou refuse le NDA (point 5), 
-    le projet doit passer immédiatement en "NON RECEVABLE".
-
-    FORMAT DE RÉPONSE OBLIGATOIRE (JSON STRICT) :
-    Tu dois répondre exclusivement au format JSON suivant :
-    {
-      "text": "Ta réponse élégante et ta question suivante ici",
-      "analysis": {
-        "name": "Nom du client",
-        "budget": "Fonds détectés",
-        "project": "RECEVABLE, NON RECEVABLE ou EN COURS"
-      }
+    // Vérification de la présence de la clé API
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        {
+          text: "Erreur : La clé OPENAI_API_KEY est manquante dans les variables d'environnement.",
+        },
+        { status: 500 }
+      );
     }
 
-    CONTEXTE :
-    Historique : ${history}
-    Dernier message : ${message}`;
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.1", // Remplacez par "gpt-4o" si le modèle n'est pas encore déployé sur votre compte
+      messages: [
+        {
+          role: "system",
+          content: `Tu es l'Expert de Qualification de Maison Trille. 
+          Ton ton est prestigieux, haut de gamme, efficace et extrêmement courtois.
+          
+          TON RÔLE : 
+          Mener un audit de qualification rigoureux en posant exactement 5 questions éliminatoires, une par une. 
+          Ne pose JAMAIS deux questions dans le même message. Attends la réponse du client pour passer à la suivante.
+          
+          LES 5 POINTS À VALIDER (DANS CET ORDRE) :
+          1. Identité : Le client agit-il en son nom propre ou pour un tiers / entité ?
+          2. Capacité de fonds : Le client peut-il fournir une preuve de fonds bancaire immédiate pour un investissement de prestige ?
+          3. Délai : Le projet doit être impérativement réalisable sous 90 jours.
+          4. Critères rédhibitoires : Existe-t-il des éléments techniques ou juridiques bloquants de son côté ?
+          5. Accord de confidentialité (NDA) : Le client accepte-t-il de signer un NDA avant d'accéder aux dossiers confidentiels ?
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+          RÈGLE D'OR DE RECEVABILITÉ : 
+          - Si le client ne peut pas prouver ses fonds (point 2) ou refuse le NDA (point 5), le projet est "NON RECEVABLE".
+          - Sinon, tant que les questions ne sont pas finies, le projet est "EN COURS".
+          - Une fois les 5 points validés positivement, le projet est "RECEVABLE".
 
-    // Nettoyage de sécurité pour garantir un JSON valide
-    const cleanJson = responseText
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+          FORMAT DE RÉPONSE OBLIGATOIRE (JSON STRICT) :
+          Tu dois répondre exclusivement au format JSON suivant, sans aucun texte avant ou après :
+          {
+            "text": "Ta réponse élégante avec ta question suivante ici",
+            "analysis": {
+              "name": "Nom du client ou entité détectée",
+              "budget": "Capacité financière mentionnée ou détectée",
+              "project": "RECEVABLE, NON RECEVABLE ou EN COURS"
+            }
+          }`,
+        },
+        {
+          role: "user",
+          content: `Historique de la conversation :\n${history}\n\nDernier message du client : ${message}`,
+        },
+      ],
+      // Force OpenAI à produire un objet JSON valide
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
 
-    return NextResponse.json(JSON.parse(cleanJson));
+    const content = response.choices[0].message.content;
+
+    if (!content) {
+      throw new Error("L'IA a renvoyé une réponse vide.");
+    }
+
+    // Renvoi de la réponse parsée directement au client (ChatInterface)
+    return NextResponse.json(JSON.parse(content));
   } catch (error: any) {
-    console.error("Erreur API Maison Trille:", error);
+    console.error("Erreur API OpenAI Maison Trille:", error);
 
-    // Réponse de secours pour l'interface en cas d'erreur 429 ou 500
+    // Réponse de secours pour éviter le plantage de l'interface
     return NextResponse.json(
       {
-        text: "Maison Trille : Je rencontre une difficulté technique ou une limite de quota. Veuillez patienter un instant.",
+        text: "Maison Trille : Je rencontre une difficulté technique pour analyser votre demande. Veuillez nous excuser pour ce désagrément.",
         analysis: { name: "-", budget: "-", project: "ERREUR" },
       },
       { status: 500 }
