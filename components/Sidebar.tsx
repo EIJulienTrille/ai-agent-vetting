@@ -10,35 +10,37 @@ export default function Sidebar() {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "14px 18px",
-    borderRadius: "10px",
+    padding: "14px 20px",
+    borderRadius: "12px",
     textDecoration: "none",
     color: pathname === path ? "white" : "#8E8E93",
     backgroundColor: pathname === path ? "#2C2C2E" : "transparent",
     fontSize: "15px",
-    fontWeight: "500",
+    fontWeight: "600",
     transition: "0.2s ease",
   });
 
   return (
     <div
       style={{
-        width: "280px", // Largeur fixe pour éviter de couper le texte
+        width: "280px", // Largeur augmentée pour le confort visuel
+        height: "100%",
         backgroundColor: "#1C1C1E",
         display: "flex",
         flexDirection: "column",
-        padding: "24px 16px",
-        borderRight: "1px solid #2C2C2E",
+        padding: "30px 20px",
+        boxSizing: "border-box",
       }}
     >
-      <div style={{ marginBottom: "40px" }}>
+      <div style={{ marginBottom: "50px" }}>
         <h1
           style={{
             color: "white",
-            fontSize: "22px",
-            fontWeight: "800",
+            fontSize: "24px",
+            fontWeight: "900",
             margin: 0,
-            whiteSpace: "nowrap", // Empêche le titre de passer à la ligne
+            letterSpacing: "-0.5px",
+            whiteSpace: "nowrap",
           }}
         >
           MAISON TRILLE
@@ -49,7 +51,7 @@ export default function Sidebar() {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "10px",
+          gap: "12px",
           flex: 1,
         }}
       >
@@ -59,17 +61,16 @@ export default function Sidebar() {
         <Link href="/dashboard" style={linkStyle("/dashboard")}>
           📊 Historique & Leads
         </Link>
-        <div style={linkStyle("/account")}>👤 Mon Compte</div>
       </nav>
 
-      <div style={{ borderTop: "1px solid #2C2C2E", paddingTop: "20px" }}>
+      <div style={{ borderTop: "1px solid #2C2C2E", paddingTop: "25px" }}>
         <div style={{ marginBottom: "20px" }}>
           <p
             style={{
               color: "#8E8E93",
               fontSize: "11px",
               textTransform: "uppercase",
-              margin: "0 0 4px 0",
+              margin: "0 0 5px 0",
             }}
           >
             Client Connecté
@@ -77,7 +78,7 @@ export default function Sidebar() {
           <p
             style={{
               color: "white",
-              fontSize: "14px",
+              fontSize: "15px",
               fontWeight: "600",
               margin: 0,
             }}
@@ -88,11 +89,11 @@ export default function Sidebar() {
         <button
           style={{
             width: "100%",
-            padding: "14px",
+            padding: "15px",
             backgroundColor: "#FF3B30",
             color: "white",
             border: "none",
-            borderRadius: "10px",
+            borderRadius: "12px",
             fontWeight: "700",
             cursor: "pointer",
           }}
