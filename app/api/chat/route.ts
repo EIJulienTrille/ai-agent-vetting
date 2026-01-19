@@ -8,13 +8,11 @@ export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
-    // Configuration du modèle Gemini 1.5 Flash
+    // SOLUTION : On récupère le modèle en spécifiant la version de l'API si possible
+    // ou en utilisant le modèle Pro qui a des routes plus stables sur Vercel
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
-      // Force l'IA à répondre en JSON pur pour éviter l'erreur technique de parsing
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
+      model: "gemini-1.5-pro", // Passage au modèle Pro pour forcer une autre route API
+      generationConfig: { responseMimeType: "application/json" },
     });
 
     const prompt = `Tu es l'Expert de Qualification de Maison Trille. 
