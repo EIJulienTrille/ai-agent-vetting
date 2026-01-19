@@ -23,7 +23,7 @@ export default function Sidebar() {
   return (
     <div
       style={{
-        width: "280px", // Largeur fixe pour protéger le titre
+        width: "280px",
         minWidth: "280px",
         backgroundColor: "#1C1C1E",
         display: "flex",
@@ -37,10 +37,11 @@ export default function Sidebar() {
         <h1
           style={{
             color: "white",
-            fontSize: "24px",
-            fontWeight: "900",
+            fontSize: "22px",
+            fontWeight: "800", // Très gras pour le luxe
             margin: 0,
-            whiteSpace: "nowrap", // Empêche de couper le titre
+            letterSpacing: "-0.02em",
+            whiteSpace: "nowrap",
           }}
         >
           MAISON TRILLE
@@ -78,7 +79,7 @@ export default function Sidebar() {
           <p
             style={{
               color: "white",
-              fontSize: "15px",
+              fontSize: "14px",
               fontWeight: "600",
               margin: 0,
             }}
@@ -89,11 +90,11 @@ export default function Sidebar() {
         <button
           style={{
             width: "100%",
-            padding: "15px",
+            padding: "14px",
             backgroundColor: "#FF3B30",
             color: "white",
             border: "none",
-            borderRadius: "12px",
+            borderRadius: "10px",
             fontWeight: "700",
             cursor: "pointer",
           }}

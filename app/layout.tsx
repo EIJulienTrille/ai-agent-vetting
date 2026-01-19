@@ -14,13 +14,13 @@ export default function RootLayout({
           height: "100vh",
           width: "100vw",
           overflow: "hidden",
+          // Restauration de la police moderne Sans-Serif
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
         }}
       >
         <div style={{ display: "flex", height: "100vh", width: "100vw" }}>
-          {/* Sidebar avec largeur fixe garantie */}
           <Sidebar />
-
-          {/* Contenu principal flexible */}
           <main
             style={{
               flex: 1,

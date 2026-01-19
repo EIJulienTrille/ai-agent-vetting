@@ -51,27 +51,40 @@ export default function ChatInterface() {
         flexDirection: "column",
         height: "100%",
         width: "100%",
+        backgroundColor: "white",
       }}
     >
-      {/* Header Interne */}
-      <div style={{ padding: "30px 50px", borderBottom: "1px solid #F2F2F7" }}>
-        <h2 style={{ fontSize: "32px", fontWeight: "800", margin: 0 }}>
+      <div style={{ padding: "40px 60px", borderBottom: "1px solid #F2F2F7" }}>
+        <h2
+          style={{
+            fontSize: "32px",
+            fontWeight: "800",
+            margin: 0,
+            letterSpacing: "-0.03em",
+          }}
+        >
           Messagerie
         </h2>
-        <p style={{ color: "#8E8E93", margin: "5px 0 0 0", fontSize: "14px" }}>
-          Session active — Audit de qualification
+        <p
+          style={{
+            color: "#8E8E93",
+            margin: "8px 0 0 0",
+            fontSize: "14px",
+            fontWeight: "500",
+          }}
+        >
+          Expertise Maison Trille — Session active
         </p>
       </div>
 
-      {/* Zone de conversation */}
       <div
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "40px 50px",
+          padding: "40px 60px",
           display: "flex",
           flexDirection: "column",
-          gap: "25px",
+          gap: "24px",
         }}
       >
         {messages.map((m, i) => (
@@ -79,15 +92,15 @@ export default function ChatInterface() {
             key={i}
             style={{
               alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-              maxWidth: "70%",
-              padding: "20px 25px",
+              maxWidth: "65%",
+              padding: "16px 24px",
               borderRadius:
-                m.role === "user" ? "25px 25px 0 25px" : "25px 25px 25px 0",
+                m.role === "user" ? "22px 22px 0 22px" : "22px 22px 22px 0",
               backgroundColor: m.role === "user" ? "#007AFF" : "#F2F2F7",
               color: m.role === "user" ? "white" : "#1C1C1E",
               fontSize: "16px",
               lineHeight: "1.5",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.02)",
+              fontWeight: "450",
             }}
           >
             {m.content}
@@ -97,16 +110,15 @@ export default function ChatInterface() {
           <div
             style={{ color: "#8E8E93", fontSize: "14px", fontStyle: "italic" }}
           >
-            Analyse en cours par l'expert...
+            Analyse en cours...
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input fixe en bas */}
       <div
         style={{
-          padding: "30px 50px",
+          padding: "30px 60px",
           backgroundColor: "white",
           borderTop: "1px solid #F2F2F7",
         }}
@@ -116,7 +128,7 @@ export default function ChatInterface() {
             display: "flex",
             gap: "15px",
             backgroundColor: "#F9F9FB",
-            padding: "12px",
+            padding: "10px",
             borderRadius: "20px",
             border: "1px solid #E5E5E7",
           }}
@@ -126,14 +138,15 @@ export default function ChatInterface() {
               flex: 1,
               border: "none",
               background: "none",
-              padding: "10px",
+              padding: "12px",
               outline: "none",
               fontSize: "16px",
+              fontFamily: "inherit", // Utilise la police sans-serif du parent
             }}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Répondez ici..."
+            placeholder="Écrivez ici..."
           />
           <button
             onClick={handleSend}
@@ -141,7 +154,7 @@ export default function ChatInterface() {
               backgroundColor: "#007AFF",
               color: "white",
               border: "none",
-              padding: "12px 30px",
+              padding: "12px 24px",
               borderRadius: "14px",
               fontWeight: "700",
               cursor: "pointer",
