@@ -3,7 +3,6 @@ import { neon } from "@neondatabase/serverless";
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
-// Empêche la mise en cache pour garantir que le CRM se mette à jour à chaque message
 export const dynamic = "force-dynamic";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -35,7 +34,7 @@ export async function POST(req: Request) {
     const clientName = data.analysis?.name || "-";
 
     // Logique UPSERT : Un seul client par nom dans le Dashboard
-    if (clientName !== "-") {
+    if (clientName !== "-" && clientName !== "Anonyme") {
       await sql`
         INSERT INTO leads (name, budget, project_status, last_message)
         VALUES (${clientName}, ${data.analysis?.budget || "-"}, ${
@@ -53,14 +52,17 @@ export async function POST(req: Request) {
     if (data.analysis?.project === "RECEVABLE") {
       await resend.emails.send({
         from: "Maison Trille <onboarding@resend.dev>",
-        to: "votre-email@exemple.com",
-        subject: "✨ Prospect Qualifié",
-        html: `<p>Le client <strong>${clientName}</strong> est qualifié.</p>`,
+        to: "eijulientrille@gmail.com",
+        subject: "✨ Prospect Qualifié - Maison Trille",
+        html: `<p>Le dossier de <strong>${clientName}</strong> est désormais RECEVABLE.</p>`,
       });
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ text: "Erreur technique." }, { status: 500 });
+    return NextResponse.json(
+      { text: "Erreur de synchronisation CRM." },
+      { status: 500 }
+    );
   }
 }
