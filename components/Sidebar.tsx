@@ -23,13 +23,14 @@ export default function Sidebar() {
   return (
     <div
       style={{
-        width: "280px", // Largeur augmentée pour le confort visuel
-        height: "100%",
+        width: "280px", // Largeur fixe pour protéger le titre
+        minWidth: "280px",
         backgroundColor: "#1C1C1E",
         display: "flex",
         flexDirection: "column",
         padding: "30px 20px",
         boxSizing: "border-box",
+        borderRight: "1px solid #2C2C2E",
       }}
     >
       <div style={{ marginBottom: "50px" }}>
@@ -39,8 +40,7 @@ export default function Sidebar() {
             fontSize: "24px",
             fontWeight: "900",
             margin: 0,
-            letterSpacing: "-0.5px",
-            whiteSpace: "nowrap",
+            whiteSpace: "nowrap", // Empêche de couper le titre
           }}
         >
           MAISON TRILLE
@@ -51,7 +51,7 @@ export default function Sidebar() {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "12px",
+          gap: "10px",
           flex: 1,
         }}
       >

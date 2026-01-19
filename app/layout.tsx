@@ -12,28 +12,23 @@ export default function RootLayout({
           margin: 0,
           padding: 0,
           height: "100vh",
-          backgroundColor: "#F9F9FB",
+          width: "100vw",
+          overflow: "hidden",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            height: "100vh",
-            width: "100vw",
-            overflow: "hidden",
-          }}
-        >
-          {/* Sidebar avec largeur fixe pour éviter de couper le texte */}
+        <div style={{ display: "flex", height: "100vh", width: "100vw" }}>
+          {/* Sidebar avec largeur fixe garantie */}
           <Sidebar />
 
-          {/* Contenu principal qui s'ajuste dynamiquement */}
+          {/* Contenu principal flexible */}
           <main
             style={{
               flex: 1,
-              display: "flex",
-              flexDirection: "column",
+              position: "relative",
               backgroundColor: "white",
               overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             {children}
