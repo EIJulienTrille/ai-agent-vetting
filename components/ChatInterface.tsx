@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
-// Structure de message recommandée pour 2026
 interface Message {
   role: "assistant" | "user";
   content: string;
@@ -19,27 +18,23 @@ export default function ChatInterface() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Gestion du défilement automatique
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, loading]);
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
-    // 1. Ajouter le message utilisateur à l'état local
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      // 2. Appel à l'API OpenAI (Route : /api/chat)
-      // L'historique est envoyé pour maintenir le contexte de la conversation
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,24 +49,20 @@ export default function ChatInterface() {
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.text || "Erreur serveur");
 
-      if (!response.ok) {
-        throw new Error(data.text || "Erreur serveur");
-      }
-
-      // 3. Ajouter la réponse de GPT-5.1 au chat
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.text },
       ]);
     } catch (err) {
-      console.error("Erreur ChatInterface:", err);
+      console.error("Erreur Chat:", err);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
-            "L'expert Maison Trille rencontre une difficulté de connexion. Veuillez réessayer.",
+            "L'expert Maison Trille rencontre une difficulté. Veuillez réessayer.",
         },
       ]);
     } finally {
@@ -80,32 +71,75 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white font-sans text-gray-900">
-      {/* Zone de messages scrollable */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-10 flex flex-col gap-6">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        width: "100%",
+        backgroundColor: "white",
+      }}
+    >
+      {/* Zone de Messagerie */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "30px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`max-w-[80%] p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
-              m.role === "user"
-                ? "self-end bg-blue-600 text-white rounded-br-none"
-                : "self-start bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200"
-            }`}
+            style={{
+              alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+              maxWidth: "75%",
+              padding: "15px 20px",
+              borderRadius:
+                m.role === "user" ? "20px 20px 0 20px" : "20px 20px 20px 0",
+              backgroundColor: m.role === "user" ? "#007AFF" : "#F2F2F7",
+              color: m.role === "user" ? "white" : "black",
+              fontSize: "15px",
+              lineHeight: "1.5",
+              boxShadow:
+                m.role === "user" ? "0 2px 10px rgba(0,122,255,0.1)" : "none",
+            }}
           >
             {m.content}
           </div>
         ))}
         {loading && (
-          <div className="self-start bg-gray-50 p-4 rounded-2xl border border-gray-100 italic text-gray-500 text-sm animate-pulse">
-            Maison Trille analyse votre demande...
+          <div
+            style={{
+              alignSelf: "flex-start",
+              color: "#8E8E93",
+              fontSize: "13px",
+              fontStyle: "italic",
+              marginLeft: "10px",
+            }}
+          >
+            Maison Trille analyse votre réponse...
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Barre d'entrée de texte fixe */}
-      <div className="p-6 border-t border-gray-100 bg-white">
-        <div className="flex gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+      {/* Barre d'input optimisée */}
+      <div style={{ padding: "20px 30px", borderTop: "1px solid #F2F2F7" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            backgroundColor: "#F9F9FB",
+            padding: "8px",
+            borderRadius: "16px",
+            border: "1px solid #E5E5E7",
+            alignItems: "center",
+          }}
+        >
           <input
             type="text"
             value={input}
@@ -113,18 +147,30 @@ export default function ChatInterface() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Écrivez votre réponse ici..."
-            className="flex-1 bg-transparent p-3 outline-none placeholder-gray-400 text-[15px]"
+            style={{
+              flex: 1,
+              border: "none",
+              backgroundColor: "transparent",
+              padding: "10px",
+              outline: "none",
+              fontSize: "15px",
+            }}
           />
           <button
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all shadow-md ${
-              loading || !input.trim()
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
-            }`}
+            style={{
+              backgroundColor: "#007AFF",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "12px",
+              cursor: loading ? "not-allowed" : "pointer",
+              fontWeight: "600",
+              transition: "opacity 0.2s",
+            }}
           >
-            {loading ? "..." : "Envoyer"}
+            Envoyer
           </button>
         </div>
       </div>
