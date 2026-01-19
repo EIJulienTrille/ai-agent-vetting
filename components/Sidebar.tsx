@@ -1,30 +1,25 @@
 "use client";
-import { signOut, useSession } from "next-auth/react";
 import React from "react";
-import Link from "next/link"; // Import indispensable
-import { usePathname } from "next/navigation"; // Pour savoir sur quelle page on est
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
-  const { data: session } = useSession();
-  const pathname = usePathname(); // Récupère l'URL actuelle (ex: /history)
+  const pathname = usePathname();
 
-  // Fonction pour styliser le bouton actif
-  const getButtonStyle = (path: string) => ({
-    width: "100%",
-    textAlign: "left" as const,
-    padding: "12px 16px",
-    borderRadius: "12px",
-    backgroundColor: pathname === path ? "#2c2c2e" : "transparent", // Gris foncé si actif
-    color: pathname === path ? "#007AFF" : "white", // Bleu si actif
-    border: "none",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: pathname === path ? "700" : "500",
-    transition: "all 0.2s ease",
+  // Style de base pour les liens
+  const linkStyle = (path: string) => ({
     display: "flex",
     alignItems: "center",
     gap: "12px",
+    padding: "12px 16px",
+    borderRadius: "8px",
     textDecoration: "none",
+    color: pathname === path ? "white" : "#8E8E93",
+    backgroundColor:
+      pathname === path ? "rgba(255, 255, 255, 0.1)" : "transparent",
+    fontSize: "15px",
+    fontWeight: "500",
+    transition: "all 0.2s ease",
   });
 
   return (
@@ -32,100 +27,77 @@ export default function Sidebar() {
       style={{
         width: "260px",
         height: "100vh",
-        backgroundColor: "#1d1d1f",
-        color: "white",
+        backgroundColor: "#1C1C1E", // Fond noir prestigieux
         display: "flex",
         flexDirection: "column",
-        padding: "24px",
-        position: "fixed",
-        left: 0,
-        top: 0,
-        zIndex: 100,
-        boxSizing: "border-box",
+        padding: "20px",
+        borderRight: "1px solid #2C2C2E",
       }}
     >
-      {/* LOGO */}
-      <div style={{ marginBottom: "40px", paddingLeft: "8px" }}>
-        <h2
+      {/* Logo / Titre */}
+      <div style={{ marginBottom: "40px", padding: "0 10px" }}>
+        <h1
           style={{
+            color: "white",
             fontSize: "20px",
-            fontWeight: "800",
-            letterSpacing: "-0.5px",
+            fontWeight: "bold",
+            letterSpacing: "1px",
           }}
         >
           MAISON TRILLE
-        </h2>
+        </h1>
       </div>
 
-      {/* NAVIGATION AVEC LINK */}
+      {/* Navigation principale */}
       <nav
         style={{
-          flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "4px",
+          gap: "8px",
+          flex: 1,
         }}
       >
-        <Link href="/" style={getButtonStyle("/")}>
-          <span>🏠</span> Messagerie
+        <Link href="/" style={linkStyle("/")}>
+          <span style={{ fontSize: "18px" }}>🏠</span> Messagerie
         </Link>
 
-        <Link href="/history" style={getButtonStyle("/history")}>
-          <span>📜</span> Historique
+        <Link href="/dashboard" style={linkStyle("/dashboard")}>
+          <span style={{ fontSize: "18px" }}>📊</span> Historique & Leads
         </Link>
 
-        <Link href="/account" style={getButtonStyle("/account")}>
-          <span>👤</span> Mon Compte
-        </Link>
+        <div style={linkStyle("/account")}>
+          <span style={{ fontSize: "18px" }}>👤</span> Mon Compte
+        </div>
       </nav>
 
-      {/* BAS DE SIDEBAR : UTILISATEUR */}
-      <div
-        style={{
-          borderTop: "1px solid #333",
-          paddingTop: "20px",
-          marginTop: "auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-        }}
-      >
-        <div style={{ paddingLeft: "8px" }}>
+      {/* Pied de la Sidebar */}
+      <div style={{ borderTop: "1px solid #2C2C2E", paddingTop: "20px" }}>
+        <div style={{ padding: "0 10px", marginBottom: "20px" }}>
           <p
             style={{
+              color: "#8E8E93",
               fontSize: "11px",
-              color: "#A1A1A6",
-              marginBottom: "4px",
               textTransform: "uppercase",
+              marginBottom: "4px",
             }}
           >
-            Client connecté
+            Client Connecté
           </p>
-          <p
-            style={{
-              fontSize: "14px",
-              fontWeight: "600",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {session?.user?.name || "Utilisateur"}
+          <p style={{ color: "white", fontSize: "14px", fontWeight: "600" }}>
+            Julien TRILLE
           </p>
         </div>
 
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
           style={{
             width: "100%",
             padding: "12px",
-            borderRadius: "12px",
-            backgroundColor: "#FF3B30",
+            backgroundColor: "#FF3B30", // Rouge déconnexion
             color: "white",
             border: "none",
-            fontWeight: "700",
+            borderRadius: "8px",
+            fontWeight: "bold",
             cursor: "pointer",
-            marginTop: "10px",
           }}
         >
           Déconnexion
