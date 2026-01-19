@@ -2,17 +2,30 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 
+/**
+ * Interface définissant la structure d'un Lead provenant de Neon
+ */
+interface Lead {
+  id: number;
+  name: string;
+  budget: string;
+  project_status: string;
+  created_at: string;
+}
+
 export default function DashboardPage() {
-  const [leads, setLeads] = useState([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Récupération des leads depuis l'API
   const fetchLeads = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/leads");
       const data = await res.json();
       setLeads(data);
     } catch (e) {
-      console.error(e);
+      console.error("Erreur de chargement des leads:", e);
     } finally {
       setLoading(false);
     }
@@ -22,11 +35,24 @@ export default function DashboardPage() {
     fetchLeads();
   }, []);
 
+  // Fonction de suppression d'un prospect
   const deleteLead = async (id: number) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce client et ses données ?"))
+    if (
+      !confirm(
+        "Voulez-vous vraiment supprimer ce prospect et tout son historique ?"
+      )
+    )
       return;
-    await fetch(`/api/leads/${id}`, { method: "DELETE" });
-    fetchLeads(); // Rafraîchissement immédiat
+
+    try {
+      const res = await fetch(`/api/leads/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        // Mise à jour locale de la liste après suppression
+        setLeads((prev) => prev.filter((lead) => lead.id !== id));
+      }
+    } catch (e) {
+      alert("Erreur lors de la suppression.");
+    }
   };
 
   return (
@@ -35,18 +61,25 @@ export default function DashboardPage() {
         padding: "40px 60px",
         backgroundColor: "white",
         minHeight: "100vh",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
-      <h1
-        style={{
-          fontSize: "32px",
-          fontWeight: "800",
-          marginBottom: "40px",
-          letterSpacing: "-0.03em",
-        }}
-      >
-        Gestion des Leads
-      </h1>
+      <div style={{ marginBottom: "40px" }}>
+        <h1
+          style={{
+            fontSize: "32px",
+            fontWeight: "800",
+            margin: 0,
+            letterSpacing: "-0.03em",
+          }}
+        >
+          Expertise Maison Trille — Gestion des Leads
+        </h1>
+        <p style={{ color: "#8E8E93", marginTop: "8px", fontSize: "16px" }}>
+          Suivi en temps réel des dossiers qualifiés par GPT-5.1
+        </p>
+      </div>
 
       <div
         style={{
@@ -77,17 +110,24 @@ export default function DashboardPage() {
               <th style={{ padding: "20px" }}>Client</th>
               <th style={{ padding: "20px" }}>Budget</th>
               <th style={{ padding: "20px" }}>Statut</th>
+              <th style={{ padding: "20px" }}>Date</th>
               <th style={{ padding: "20px", textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {leads.map((lead: any) => (
-              <tr key={lead.id} style={{ borderBottom: "1px solid #F2F2F7" }}>
+            {leads.map((lead) => (
+              <tr
+                key={lead.id}
+                style={{
+                  borderBottom: "1px solid #F2F2F7",
+                  transition: "background 0.2s",
+                }}
+              >
                 <td
                   style={{
                     padding: "20px",
                     fontWeight: "600",
-                    fontSize: "15px",
+                    color: "#1C1C1E",
                   }}
                 >
                   {lead.name}
@@ -115,6 +155,15 @@ export default function DashboardPage() {
                     {lead.project_status}
                   </span>
                 </td>
+                <td
+                  style={{
+                    padding: "20px",
+                    color: "#8E8E93",
+                    fontSize: "14px",
+                  }}
+                >
+                  {new Date(lead.created_at).toLocaleDateString("fr-FR")}
+                </td>
                 <td style={{ padding: "20px", textAlign: "right" }}>
                   <div
                     style={{
@@ -123,13 +172,17 @@ export default function DashboardPage() {
                       justifyContent: "flex-end",
                     }}
                   >
+                    {/* Lien vers la page principale avec l'ID du prospect */}
                     <Link
-                      href="/"
+                      href={`/?leadId=${lead.id}`}
                       style={{
                         textDecoration: "none",
                         color: "#007AFF",
                         fontSize: "14px",
                         fontWeight: "600",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        transition: "background 0.2s",
                       }}
                     >
                       Voir Chat
@@ -143,7 +196,7 @@ export default function DashboardPage() {
                         fontSize: "14px",
                         fontWeight: "600",
                         cursor: "pointer",
-                        padding: 0,
+                        padding: "8px 12px",
                       }}
                     >
                       Supprimer
@@ -154,11 +207,20 @@ export default function DashboardPage() {
             ))}
           </tbody>
         </table>
+
         {loading && (
           <div
             style={{ padding: "40px", textAlign: "center", color: "#8E8E93" }}
           >
-            Mise à jour du CRM...
+            Synchronisation avec la base Neon...
+          </div>
+        )}
+
+        {!loading && leads.length === 0 && (
+          <div
+            style={{ padding: "60px", textAlign: "center", color: "#8E8E93" }}
+          >
+            Aucun prospect détecté pour le moment.
           </div>
         )}
       </div>
