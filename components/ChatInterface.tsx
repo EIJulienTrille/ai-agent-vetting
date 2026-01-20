@@ -2,63 +2,64 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
+/**
+ * Interface ChatInterface : Gère l'expérience de messagerie acheteur.
+ * Intègre la détection du bien (propertyId) et la restauration de lead (leadId).
+ */
 export default function ChatInterface() {
   const searchParams = useSearchParams();
-  const leadId = searchParams.get("leadId");
+  const propertyId = searchParams.get("propertyId"); // ID du bien pour le contexte IA
+  const leadId = searchParams.get("leadId"); // ID du prospect pour le Dashboard
 
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content:
-        "Bienvenue chez Maison Trille. Agissez-vous en votre nom propre ou représentez-vous une entité ?",
+        "Bienvenue chez Maison Trille. Je suis votre expert dédié. Pour commencer l'audit de qualification, pouvez-vous m'indiquer votre nom ?",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Charger l'historique si on vient du Dashboard
+  // Auto-scroll pour suivre la conversation
   useEffect(() => {
-    if (leadId) {
-      fetch(`/api/leads/${leadId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.last_message) {
-            setMessages([
-              { role: "assistant", content: "Historique restauré." },
-              { role: "assistant", content: data.last_message },
-            ]);
-          }
-        });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [leadId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async () => {
+  // Envoi du message à l'API
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!input.trim() || loading) return;
-    const userMsg = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMsg]);
+
+    const userMessage = { role: "user", content: input };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const response = await fetch("/api/chat", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: input,
-          history: messages.map((m) => m.content).join("\n"),
+          history: JSON.stringify(messages),
+          propertyId: propertyId, // Envoi du contexte du bien immobilier
         }),
       });
-      const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.text },
-      ]);
-    } catch (e) {
-      console.error(e);
+
+      const data = await response.json();
+
+      if (data.text) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.text },
+        ]);
+      }
+    } catch (error) {
+      console.error("Erreur Chat:", error);
     } finally {
       setLoading(false);
     }
@@ -69,90 +70,126 @@ export default function ChatInterface() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100%",
-        width: "100%",
-        fontFamily: "sans-serif",
+        height: "100vh",
+        backgroundColor: "white",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
-      <div style={{ padding: "30px 50px", borderBottom: "1px solid #F2F2F7" }}>
-        <h2 style={{ fontSize: "32px", fontWeight: "800", margin: 0 }}>
-          Messagerie
-        </h2>
-        <p style={{ color: "#8E8E93", fontSize: "14px" }}>
-          {leadId
-            ? "Consultation d'un dossier existant"
-            : "Nouvel audit de qualification"}
-        </p>
-      </div>
-
+      {/* Header Statutaire */}
       <div
         style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "40px 50px",
+          padding: "20px 40px",
+          borderBottom: "1px solid #F2F2F7",
           display: "flex",
-          flexDirection: "column",
-          gap: "25px",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        {messages.map((m, i) => (
+        <div>
+          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>
+            Expertise Maison Trille
+          </h2>
+          <p style={{ margin: 0, fontSize: "12px", color: "#34C759" }}>
+            ● Audit de qualification en cours
+          </p>
+        </div>
+        {propertyId && (
           <div
-            key={i}
             style={{
-              alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-              maxWidth: "70%",
-              padding: "18px 24px",
-              borderRadius:
-                m.role === "user" ? "22px 22px 0 22px" : "22px 22px 22px 0",
-              backgroundColor: m.role === "user" ? "#007AFF" : "#F2F2F7",
-              color: m.role === "user" ? "white" : "#1C1C1E",
-              fontSize: "16px",
+              fontSize: "12px",
+              color: "#8E8E93",
+              backgroundColor: "#F2F2F7",
+              padding: "6px 12px",
+              borderRadius: "8px",
             }}
           >
-            {m.content}
+            Réf. Bien : #{propertyId}
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        )}
       </div>
 
-      <div style={{ padding: "30px 50px", borderTop: "1px solid #F2F2F7" }}>
+      {/* Zone de messages */}
+      <div
+        ref={scrollRef}
+        style={{ flex: 1, overflowY: "auto", padding: "40px" }}
+      >
         <div
           style={{
+            maxWidth: "700px",
+            margin: "0 auto",
             display: "flex",
-            gap: "15px",
-            backgroundColor: "#F9F9FB",
-            padding: "12px",
-            borderRadius: "20px",
+            flexDirection: "column",
+            gap: "20px",
           }}
         >
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              style={{
+                alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                backgroundColor: m.role === "user" ? "#007AFF" : "#F2F2F7",
+                color: m.role === "user" ? "white" : "#1C1C1E",
+                padding: "14px 20px",
+                borderRadius: "18px",
+                maxWidth: "80%",
+                fontSize: "15px",
+                lineHeight: "1.4",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+              }}
+            >
+              {m.content}
+            </div>
+          ))}
+          {loading && (
+            <div style={{ color: "#8E8E93", fontSize: "13px" }}>
+              L'expert analyse vos réponses...
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Input de saisie */}
+      <div style={{ padding: "30px 40px", borderTop: "1px solid #F2F2F7" }}>
+        <form
+          onSubmit={sendMessage}
+          style={{ maxWidth: "700px", margin: "0 auto", position: "relative" }}
+        >
           <input
-            style={{
-              flex: 1,
-              border: "none",
-              background: "none",
-              padding: "10px",
-              outline: "none",
-              fontSize: "16px",
-            }}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Répondez ici..."
+            placeholder="Répondez à l'expert..."
+            style={{
+              width: "100%",
+              padding: "16px 24px",
+              borderRadius: "30px",
+              border: "1px solid #E5E5E7",
+              backgroundColor: "#F9F9FB",
+              fontSize: "15px",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
           />
           <button
-            onClick={handleSend}
+            type="submit"
             style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
               backgroundColor: "#007AFF",
               color: "white",
               border: "none",
-              padding: "12px 30px",
-              borderRadius: "14px",
-              fontWeight: "700",
+              borderRadius: "50%",
+              width: "36px",
+              height: "36px",
               cursor: "pointer",
+              fontWeight: "bold",
             }}
           >
-            Envoyer
+            ↑
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
