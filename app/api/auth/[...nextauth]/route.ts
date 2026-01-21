@@ -1,41 +1,40 @@
 import NextAuth from "next-auth";
-import type { NextAuthOptions } from "next-auth"; // Ajout du type pour plus de sécurité
 import CredentialsProvider from "next-auth/providers/credentials";
-import { db } from "@vercel/postgres";
-import bcrypt from "bcryptjs";
 
-// 1. On définit et on EXPORTE la configuration
-export const authOptions: NextAuthOptions = {
+// Configuration de l'authentification
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: "Maison Trille Account",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: {
+          label: "Email",
+          type: "email",
+          placeholder: "agent@maison-trille.com",
+        },
+        password: { label: "Mot de passe", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        const { rows } = await db.query(
-          "SELECT * FROM users WHERE email = $1",
-          [credentials.email]
-        );
-        const user = rows[0];
+        // Pour le MVP, nous utilisons un compte test.
+        // À terme, nous vérifierons cela dans la table 'users' de Neon.
         if (
-          user &&
-          (await bcrypt.compare(credentials.password, user.password))
+          credentials?.email === "admin@maison-trille.com" &&
+          credentials?.password === "prestige2026"
         ) {
-          return { id: user.id, name: user.name, email: user.email };
+          return {
+            id: "1",
+            name: "Julien TRILLE",
+            email: "admin@maison-trille.com",
+          };
         }
         return null;
       },
     }),
   ],
-  pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
+  pages: {
+    signIn: "/auth/signin", // On va créer cette page personnalisée
+  },
   secret: process.env.NEXTAUTH_SECRET,
-};
-
-// 2. Le handler utilise cette configuration
-const handler = NextAuth(authOptions);
+});
 
 export { handler as GET, handler as POST };

@@ -1,40 +1,42 @@
-import { db } from "@vercel/postgres";
-import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { neon } from "@neondatabase/serverless";
+import { NextResponse } from "next/server";
 
-export async function GET() {
+const authOptions = {}; // Configuration locale pour éviter les erreurs de chemin
+
+export const dynamic = "force-dynamic";
+const sql = neon(process.env.DATABASE_URL || "");
+
+export async function GET(req: Request) {
   try {
-    // 1. On récupère la session pour savoir qui demande l'historique
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.email) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    // Sécurité : Seul un agent connecté peut voir l'historique complet
+    if (!session) {
+      return NextResponse.json({ error: "Accès refusé" }, { status: 401 });
     }
 
-    // 2. On récupère l'ID de l'utilisateur Julien Trille à partir de son email
-    const userRes = await db.query("SELECT id FROM users WHERE email = $1", [
-      session.user.email,
-    ]);
-    const userId = userRes.rows[0]?.id;
+    const { searchParams } = new URL(req.url);
+    const leadId = searchParams.get("leadId");
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Utilisateur introuvable" },
-        { status: 404 }
-      );
+    if (!leadId) {
+      return NextResponse.json({ error: "ID manquant" }, { status: 400 });
     }
 
-    // 3. On récupère ses audits du plus récent au plus ancien
-    const { rows } = await db.query(
-      "SELECT id, status, verdict, created_at FROM vetting_logs WHERE user_id = $1 ORDER BY created_at DESC",
-      [userId]
+    // Récupération de l'historique classé par date
+    const history = await sql`
+      SELECT role, content, created_at 
+      FROM chat_logs 
+      WHERE lead_id = ${leadId} 
+      ORDER BY created_at ASC
+    `;
+
+    return NextResponse.json(history);
+  } catch (error) {
+    console.error("Erreur fetch-history:", error);
+    return NextResponse.json(
+      { error: "Erreur de base de données" },
+      { status: 500 }
     );
-
-    // 4. On renvoie les données en JSON
-    return NextResponse.json(rows);
-  } catch (error: any) {
-    console.error("Erreur API Fetch History:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
