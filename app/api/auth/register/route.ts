@@ -1,39 +1,66 @@
-import { db } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
+// Configuration pour garantir que la route n'est pas mise en cache
+export const dynamic = "force-dynamic";
+const sql = neon(process.env.DATABASE_URL || "");
+
+/**
+ * Route API pour l'inscription de nouveaux agents immobiliers.
+ * Vérifie l'existence de l'utilisateur, hache le mot de passe et l'enregistre dans Neon.
+ */
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const { email, password, name } = await req.json();
 
-    // 1. Validation basique
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
-    }
-
-    // 2. Cryptage du mot de passe (ne jamais stocker en clair !)
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 3. Insertion dans la base de données Postgres
-    await db.query(
-      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3)",
-      [name, email, hashedPassword]
-    );
-
-    return NextResponse.json(
-      { message: "Utilisateur créé avec succès" },
-      { status: 201 }
-    );
-  } catch (err: any) {
-    // Gestion de l'erreur si l'email existe déjà (contrainte UNIQUE en SQL)
-    if (err.code === "23505") {
+    // 1. Validation de base des champs
+    if (!email || !password || !name) {
       return NextResponse.json(
-        { error: "Cet email est déjà utilisé" },
+        {
+          error:
+            "Tous les champs (nom, email, mot de passe) sont obligatoires.",
+        },
         { status: 400 }
       );
     }
+
+    // 2. Vérification de l'existence de l'utilisateur dans Neon
+    const existingUser = await sql`
+      SELECT id FROM users WHERE email = ${email} LIMIT 1
+    `;
+
+    if (existingUser.length > 0) {
+      return NextResponse.json(
+        { error: "Un compte avec cet email existe déjà." },
+        { status: 400 }
+      );
+    }
+
+    // 3. Hachage du mot de passe pour la sécurité
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 4. Insertion du nouvel agent dans la base de données
+    const newUser = await sql`
+      INSERT INTO users (name, email, password)
+      VALUES (${name}, ${email}, ${hashedPassword})
+      RETURNING id, name, email, created_at
+    `;
+
     return NextResponse.json(
-      { error: "Erreur lors de l'inscription" },
+      {
+        message: "Agent enregistré avec succès.",
+        user: newUser[0],
+      },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error("Erreur lors de l'inscription:", error);
+    return NextResponse.json(
+      {
+        error: "Une erreur interne est survenue lors de la création du compte.",
+      },
       { status: 500 }
     );
   }
